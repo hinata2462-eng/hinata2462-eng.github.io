@@ -1,0 +1,2219 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PILOT">
+<meta name="theme-color" content="#0e1830">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230e1830'/%3E%3Cpath d='M36 96 L146 46 L98 146 L84 104 Z' fill='white'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%230e1830'/%3E%3Cpath d='M36 96 L146 46 L98 146 L84 104 Z' fill='white'/%3E%3C/svg%3E">
+<title>PILOT</title>
+<style>
+:root{
+  --navy:#0e1830; --navy2:#16223f; --ink:#16181d; --muted:#6c7280; --line:#e7e8ec;
+  --bg:#f5f6f8; --card:#ffffff;
+  --blue:#2563eb; --blue-d:#1d4ed8;   /* 進行中 */
+  --amber:#c98414; --amber-bg:#fdf3e2; /* 待ち */
+  --red:#d23b3b; --red-bg:#fdecec;     /* 注意 */
+  --green:#1f8a5b; --green-bg:#e8f5ee; /* 完了 */
+  --gray:#8a8f98; --gray-bg:#eef0f2;   /* 保留 */
+  --shadow:0 1px 2px rgba(16,24,48,.04),0 10px 26px rgba(16,24,48,.07);
+  --r:20px; --nav-h:64px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",Meiryo,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;}
+body{max-width:560px;margin:0 auto;min-height:100dvh;position:relative;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input,textarea,select{font-family:inherit;font-size:16px;}
+:focus{outline:none;}
+.hidden{display:none!important;}
+
+/* ===== Header ===== */
+header{position:sticky;top:0;z-index:40;background:var(--navy);color:#fff;
+  padding:calc(var(--safe-t) + 12px) 16px 12px;
+  border-bottom-left-radius:20px;border-bottom-right-radius:20px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.brand{display:flex;align-items:center;gap:9px;}
+.logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#3b6fe0,#1f3f8f);
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex:none;box-shadow:0 3px 10px rgba(40,80,200,.4);}
+.brand .nm{font-size:18px;font-weight:800;letter-spacing:1px;}
+.brand .tg{font-size:10.5px;color:#aeb8d4;margin-top:1px;letter-spacing:.3px;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.mode-chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);
+  border-radius:20px;padding:7px 12px 7px 11px;font-size:12.5px;font-weight:700;}
+.mode-chip .dot{width:8px;height:8px;border-radius:50%;background:#5bd49a;}
+.mode-chip.busy .dot{background:#ffb84d;} .mode-chip.out .dot{background:#5aa9ff;}
+.mode-chip.focus .dot{background:#b58dff;} .mode-chip.tired .dot{background:#ff8f8f;}
+.mode-chip.off .dot{background:#9aa0ab;}
+.gear-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none;}
+
+/* ===== Main ===== */
+main{padding:12px 13px calc(var(--nav-h) + var(--safe-b) + 24px);min-height:60vh;}
+.view{display:none;animation:fade .25s;}
+.view.on{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+.sec{font-size:13.5px;font-weight:800;margin:22px 3px 11px;display:flex;align-items:center;gap:8px;color:#3a3f49;}
+.sec .bar{width:4px;height:15px;border-radius:3px;background:var(--navy);flex:none;}
+.sec .ct{font-weight:700;color:var(--muted);font-size:12px;margin-left:auto;}
+.sec:first-child{margin-top:6px;}
+.sec .lk{margin-left:auto;font-size:12px;font-weight:800;color:var(--blue-d);}
+
+.greet{font-size:13px;color:var(--muted);margin:2px 3px 0;}
+.greet b{color:var(--ink);}
+
+/* ===== Hero ===== */
+.hero{background:linear-gradient(160deg,#16223f,#0e1830);color:#fff;border-radius:24px;
+  padding:18px 17px 16px;box-shadow:0 14px 34px rgba(14,24,48,.28);position:relative;overflow:hidden;}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;
+  background:radial-gradient(circle,rgba(90,140,255,.25),transparent 70%);}
+.hero .lab{font-size:11.5px;font-weight:800;letter-spacing:1.5px;color:#8fa6e6;display:flex;align-items:center;gap:7px;}
+.hero .lab .ws{background:rgba(255,255,255,.14);color:#cdd8f5;border-radius:7px;padding:2px 8px;letter-spacing:.4px;}
+.hero .ttl{font-size:22px;font-weight:800;line-height:1.4;margin:11px 0 0;}
+.hero .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px;}
+.hero .pill{background:rgba(255,255,255,.13);border-radius:9px;padding:6px 11px;font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:5px;}
+.hero .pill.due{background:rgba(210,90,90,.32);}
+.hero .why{font-size:13px;color:#c4cfe9;margin-top:13px;line-height:1.6;display:flex;gap:7px;}
+.hero .acts{display:flex;gap:9px;margin-top:16px;}
+.hero .acts button{flex:1;padding:14px;border-radius:14px;font-size:15.5px;font-weight:800;}
+.hero .start{background:#fff;color:var(--navy);flex:1.6!important;}
+.hero .alt{background:rgba(255,255,255,.13);color:#fff;}
+.hero .done{background:rgba(95,212,154,.22);color:#bff3d6;}
+.hero .acts button:active{transform:scale(.97);}
+.hero-empty{background:linear-gradient(160deg,#1c8a5b,#147047);}
+
+/* ===== card / row ===== */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--line);}
+.mini{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:15px;box-shadow:var(--shadow);
+  padding:12px 13px;margin-bottom:9px;border:1px solid var(--line);border-left-width:5px;transition:opacity .3s,transform .15s;}
+.mini:active{transform:scale(.992);}
+.mini.r-sankou{border-left-color:#2f8f6a;} .mini.r-reiki{border-left-color:#b8902a;}
+.mini.r-olive{border-left-color:#5a8f3a;} .mini.r-private{border-left-color:#5a78d6;}
+.mini.r-none{border-left-color:var(--gray);}
+.chk{flex:none;width:38px;height:38px;border-radius:50%;border:2.5px solid #cdd0d6;background:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:19px;color:transparent;transition:.15s;}
+.chk:active{transform:scale(.86);}
+.mini.done{opacity:.45;}
+.mini.done .chk{background:var(--green);border-color:var(--green);color:#fff;}
+.mini.done .m-ttl{text-decoration:line-through;}
+.mini.hold-row{opacity:.7;}
+.m-body{flex:1;min-width:0;}
+.m-ttl{font-size:15px;font-weight:700;line-height:1.45;}
+.m-sub{font-size:12px;color:var(--muted);margin-top:4px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.m-sub .ws{font-weight:800;}
+.ws-sankou{color:#2f8f6a;} .ws-reiki{color:#a07c1d;} .ws-olive{color:#52822f;} .ws-private{color:#4a68c8;} .ws-none{color:var(--gray);}
+.m-edit{flex:none;color:#c0c5cd;font-size:18px;padding:4px 2px;}
+
+.ball{display:inline-flex;align-items:center;gap:4px;border-radius:7px;padding:2px 7px;font-size:11px;font-weight:800;}
+.ball.self{background:var(--blue);color:#fff;}
+.ball.other{background:var(--amber-bg);color:var(--amber);border:1px solid #f1d9a8;}
+.ball.team{background:#ece9fb;color:#6b4fd0;border:1px solid #ddd5f5;}
+.ball.cond{background:var(--gray-bg);color:#5f6670;border:1px solid #dadde1;}
+.ball.unknown{background:var(--red-bg);color:var(--red);border:1px solid #f3c9c9;}
+
+.tag{display:inline-flex;align-items:center;gap:3px;border-radius:6px;padding:2px 7px;font-size:10.5px;font-weight:800;}
+.tag.now{background:var(--blue);color:#fff;} .tag.wait{background:var(--amber-bg);color:var(--amber);}
+.tag.warn{background:var(--red);color:#fff;} .tag.done{background:var(--green-bg);color:var(--green);}
+.tag.hold{background:var(--gray-bg);color:#5f6670;}
+.over{background:var(--red);color:#fff;font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;}
+
+.next{font-size:12.5px;color:#3c4654;margin-top:6px;background:#f2f6ff;border-radius:8px;padding:6px 9px;line-height:1.5;border:1px solid #e2ebfd;}
+.next b{color:var(--blue-d);}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:13px 14px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;}
+.tile .l{font-size:13px;font-weight:700;color:#414855;}
+.tile .n{font-size:21px;font-weight:800;}
+.tile.danger .n{color:var(--red);} .tile.warn .n{color:var(--amber);} .tile.ok .n{color:var(--blue);}
+
+.stall{background:var(--card);border:1px solid #f1d4d4;border-left:5px solid var(--red);border-radius:16px;padding:14px;box-shadow:var(--shadow);margin-bottom:11px;}
+.stall .h{font-size:15px;font-weight:800;display:flex;align-items:center;gap:7px;}
+.stall .sub{font-size:12.5px;color:var(--red);font-weight:700;margin-top:5px;}
+.stall .sol{font-size:13px;color:#3c4654;margin-top:9px;line-height:1.6;}
+.stall .acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.stall .acts button{flex:1;min-width:90px;padding:11px 8px;border-radius:11px;font-size:13px;font-weight:800;background:#f3f5f8;border:1px solid var(--line);color:#3a414c;}
+.stall .acts button.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+.stall .acts button:active{transform:scale(.97);}
+
+.sched{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:6px 4px;}
+.sched .it{display:flex;align-items:center;gap:12px;padding:9px 12px;}
+.sched .it+.it{border-top:1px solid #f1f2f4;}
+.sched .tm{font-size:13px;font-weight:800;color:var(--navy);width:46px;flex:none;}
+.sched .ev{font-size:14px;font-weight:600;}
+.sched .free{color:var(--green);font-weight:700;}
+.sched .free .tm{color:var(--green);}
+
+.ai-note{background:linear-gradient(160deg,#f3f7ff,#eef3fe);border:1px solid #dde7fb;border-radius:16px;padding:14px 15px;}
+.ai-note .h{font-size:12.5px;font-weight:800;color:var(--blue-d);display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.ai-note p{margin:0 0 7px;font-size:13.5px;line-height:1.7;color:#2c3340;display:flex;gap:8px;}
+.ai-note p:last-child{margin-bottom:0;}
+.ai-note p::before{content:"•";color:var(--blue);font-weight:800;}
+
+/* ===== 預ける ===== */
+.deposit-hd{text-align:center;margin:14px 0 6px;}
+.deposit-hd .t{font-size:19px;font-weight:800;}
+.deposit-hd .s{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.6;}
+.miccircle{width:128px;height:128px;border-radius:50%;margin:18px auto 6px;
+  background:radial-gradient(circle at 50% 38%,#3b6fe0,#1d3f8f);
+  display:flex;align-items:center;justify-content:center;font-size:52px;color:#fff;
+  box-shadow:0 16px 40px rgba(40,80,200,.4);position:relative;transition:.2s;}
+.miccircle:active{transform:scale(.95);}
+.miccircle.rec{background:radial-gradient(circle at 50% 38%,#e85b5b,#bb2e2e);box-shadow:0 0 0 0 rgba(210,60,60,.5);animation:pulse 1.3s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(210,60,60,.45)}70%{box-shadow:0 0 0 26px rgba(210,60,60,0)}100%{box-shadow:0 0 0 0 rgba(210,60,60,0)}}
+.mic-cap{text-align:center;font-size:13.5px;color:var(--muted);font-weight:700;margin-top:2px;}
+.dep-tools{display:flex;gap:9px;margin:18px 0 0;}
+.dep-tools button{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 6px;
+  font-size:13px;font-weight:800;color:#3a414c;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:6px;}
+.dep-tools button .ic{font-size:22px;}
+.dep-tools button:active{transform:scale(.97);}
+.dep-area{margin-top:14px;}
+.dep-area textarea{width:100%;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;min-height:96px;resize:none;line-height:1.7;box-shadow:var(--shadow);color:var(--ink);}
+.dep-area textarea::placeholder{color:#aab0b9;}
+.big-btn{width:100%;margin-top:11px;padding:16px;border-radius:15px;background:var(--navy);color:#fff;font-size:16px;font-weight:800;box-shadow:0 8px 22px rgba(14,24,48,.22);display:flex;align-items:center;justify-content:center;gap:8px;}
+.big-btn:active{transform:scale(.985);}
+.dep-eg{font-size:12.5px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.9;}
+.dep-eg b{color:#414855;}
+
+/* ===== フォロー ===== */
+.ftabs{display:flex;gap:7px;overflow-x:auto;padding:2px 1px 4px;margin:2px -2px 4px;scrollbar-width:none;}
+.ftabs::-webkit-scrollbar{display:none;}
+.ftab{flex:none;padding:9px 13px;border-radius:11px;font-size:13px;font-weight:800;background:#fff;border:1px solid var(--line);color:#5a616c;white-space:nowrap;box-shadow:var(--shadow);}
+.ftab.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+.ftab .b{display:inline-block;background:var(--red);color:#fff;border-radius:9px;font-size:10.5px;padding:1px 6px;margin-left:5px;}
+.ftab.on .b{background:rgba(255,255,255,.28);}
+
+.pgroup{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:14px 15px;margin-bottom:12px;}
+.pgroup .ph{display:flex;align-items:center;gap:10px;}
+.pgroup .av{width:40px;height:40px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex:none;}
+.pgroup .pn{font-size:16px;font-weight:800;}
+.pgroup .pmeta{font-size:12px;color:var(--muted);margin-top:2px;}
+.pgroup ul{list-style:none;margin:11px 0 0;padding:0;}
+.pgroup li{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:7px 0;border-top:1px solid #f1f2f4;}
+.pgroup li .qs{flex:1;}
+.pgroup li.answered{color:#9aa0a8;}
+.pgroup li.answered .qs{text-decoration:line-through;}
+.pgroup li .qtag{font-size:10px;font-weight:800;border-radius:5px;padding:1px 6px;}
+.pgroup li .qtag.no{background:var(--amber-bg);color:var(--amber);}
+.pgroup li .qtag.ok{background:var(--green-bg);color:var(--green);}
+.pgroup .pacts{display:flex;gap:8px;margin-top:13px;}
+.pgroup .pacts button{flex:1;padding:11px 6px;border-radius:11px;font-size:13px;font-weight:800;}
+.pgroup .pacts .p1{background:var(--navy);color:#fff;}
+.pgroup .pacts .p2{background:#f3f5f8;color:#3a414c;border:1px solid var(--line);}
+.pgroup .pacts button:active{transform:scale(.97);}
+.phist{margin-top:11px;}
+.phist summary{font-size:12.5px;color:var(--muted);font-weight:700;cursor:pointer;}
+.phist .hl{font-size:12.5px;color:#5a616c;padding:5px 0 0 4px;line-height:1.6;}
+
+/* ===== 案件 ===== */
+.proj{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:15px;margin-bottom:12px;border-top-width:4px;}
+.proj.st-ok{border-top-color:var(--blue);} .proj.st-warn{border-top-color:var(--amber);}
+.proj.st-stall{border-top-color:var(--red);} .proj.st-done{border-top-color:var(--green);} .proj.st-hold{border-top-color:var(--gray);}
+.proj .pj-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.proj .pj-nm{font-size:17px;font-weight:800;}
+.proj .pj-ws{font-size:12px;font-weight:800;margin-top:3px;}
+.proj .blocker{background:var(--red-bg);border:1px solid #f3c9c9;border-radius:10px;padding:8px 11px;font-size:12.5px;color:#b23838;font-weight:700;margin-top:11px;display:flex;gap:7px;line-height:1.5;}
+.proj .blocker.ok{background:var(--green-bg);border-color:#bce6cf;color:var(--green);}
+.proj .pj-row{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap;}
+.proj .pj-chip{font-size:12px;background:#f3f5f8;border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-weight:700;color:#46505e;}
+.proj .pj-chip b{color:var(--ink);}
+.bar-wrap{margin-top:13px;}
+.bar-track{height:7px;border-radius:5px;background:#eceef1;overflow:hidden;}
+.bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#2f6fe0,#1f8a5b);}
+.bar-lab{font-size:11.5px;color:var(--muted);margin-top:5px;display:flex;justify-content:space-between;}
+.steps{margin-top:14px;border-top:1px solid #f1f2f4;padding-top:6px;}
+.step{display:flex;align-items:center;gap:11px;padding:9px 2px;}
+.step+.step{border-top:1px solid #f6f7f8;}
+.step.editable{cursor:pointer;}
+.step .si{width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
+.step .si.done{background:var(--green);color:#fff;}
+.step .si.prog{background:var(--blue);color:#fff;}
+.step .si.todo{background:#eceef1;color:#aab0b9;border:1.5px solid #dde0e4;}
+.step .sn{flex:1;font-size:14px;font-weight:600;}
+.step.is-done .sn{color:#9aa0a8;}
+.step .del{color:#c7ccd3;font-size:18px;padding:0 4px;}
+.pj-acts{display:flex;gap:8px;margin-top:14px;}
+.pj-acts button{flex:1;padding:11px;border-radius:11px;font-size:13px;font-weight:800;background:#f3f5f8;border:1px solid var(--line);color:#3a414c;}
+.pj-acts button.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+.addbtn{width:100%;padding:14px;border-radius:14px;background:#fff;border:1px dashed #c3c9d2;color:var(--navy);font-weight:800;box-shadow:var(--shadow);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:7px;}
+.addbtn:active{transform:scale(.99);}
+
+/* ===== 秘書 ===== */
+.chat{padding-bottom:8px;}
+.bubble{max-width:85%;padding:12px 14px;border-radius:17px;font-size:14px;line-height:1.65;margin-bottom:11px;white-space:pre-wrap;}
+.bubble.ai{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);border-bottom-left-radius:5px;}
+.bubble.me{background:var(--navy);color:#fff;margin-left:auto;border-bottom-right-radius:5px;}
+.bubble.ai b{color:var(--blue-d);}
+.bubble.act{background:#eef3fe;border-color:#dbe6fb;}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 1px 8px;margin:0 -2px;scrollbar-width:none;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{flex:none;background:#fff;border:1px solid var(--line);border-radius:20px;padding:9px 14px;font-size:13px;font-weight:700;color:#46505e;box-shadow:var(--shadow);white-space:nowrap;}
+.chip:active{transform:scale(.96);}
+.chatbar{position:fixed;bottom:calc(var(--nav-h) + var(--safe-b));left:0;right:0;max-width:560px;margin:0 auto;
+  background:rgba(245,246,248,.94);backdrop-filter:blur(10px);padding:8px 12px 9px;border-top:1px solid var(--line);display:flex;gap:9px;align-items:center;}
+.chatbar input{flex:1;background:#fff;border:1px solid var(--line);border-radius:22px;padding:12px 15px;box-shadow:var(--shadow);}
+.chatbar .send{width:46px;height:46px;border-radius:50%;background:var(--navy);color:#fff;font-size:19px;display:flex;align-items:center;justify-content:center;flex:none;}
+.chatbar .mic{width:46px;height:46px;border-radius:50%;background:#fff;border:1px solid var(--line);font-size:21px;display:flex;align-items:center;justify-content:center;flex:none;color:#3a414c;}
+.chatbar .mic.rec{background:var(--red);color:#fff;border-color:var(--red);}
+
+/* ===== nav ===== */
+nav{position:fixed;bottom:0;left:0;right:0;max-width:560px;margin:0 auto;height:calc(var(--nav-h) + var(--safe-b));
+  padding-bottom:var(--safe-b);background:rgba(255,255,255,.97);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);display:flex;z-index:35;}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#9aa0ab;font-size:10.5px;font-weight:700;position:relative;}
+nav button .ic{font-size:21px;line-height:1;}
+nav button.on{color:var(--navy);}
+nav button.dep{color:var(--navy);}
+nav button.dep .ic{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#3b6fe0,#1d3f8f);color:#fff;display:flex;align-items:center;justify-content:center;font-size:25px;margin-top:-22px;box-shadow:0 8px 20px rgba(40,80,200,.4);border:4px solid var(--bg);}
+nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px);background:var(--red);color:#fff;font-size:9.5px;font-weight:800;border-radius:9px;min-width:16px;height:16px;padding:0 4px;display:flex;align-items:center;justify-content:center;}
+
+/* ===== sheet / modal ===== */
+.scrim{position:fixed;inset:0;background:rgba(14,20,40,.5);z-index:60;display:none;align-items:flex-end;justify-content:center;}
+.scrim.on{display:flex;animation:fade .2s;}
+.sheet{background:#fff;width:100%;max-width:560px;border-radius:24px 24px 0 0;max-height:90dvh;overflow-y:auto;
+  padding:8px 16px calc(20px + var(--safe-b));animation:up .26s cubic-bezier(.2,.9,.3,1);}
+@keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+.grab{width:42px;height:5px;border-radius:3px;background:#dadde2;margin:8px auto 12px;}
+.sheet h3{font-size:18px;font-weight:800;margin:2px 0 4px;}
+.sheet .desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;}
+
+.pr{background:#f7f8fa;border:1px solid var(--line);border-radius:14px;padding:5px 4px;margin-bottom:14px;}
+.pr .fld{display:flex;align-items:center;gap:10px;padding:11px 12px;}
+.pr .fld+.fld{border-top:1px solid #eceef1;}
+.pr .fk{font-size:12.5px;color:var(--muted);width:74px;flex:none;font-weight:700;}
+.pr .fv{flex:1;font-size:14.5px;font-weight:700;min-width:0;}
+.pr .fv input,.pr .fv select{width:100%;background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-weight:700;}
+.pr .conf{font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px;margin-left:auto;flex:none;}
+.pr .conf.lo{background:var(--red-bg);color:var(--red);} .pr .conf.mid{background:var(--amber-bg);color:var(--amber);} .pr .conf.hi{background:var(--green-bg);color:var(--green);}
+.multi-note{font-size:13px;font-weight:800;color:var(--navy);background:#eef3fe;border:1px solid #dde7fb;border-radius:11px;padding:10px 13px;margin-bottom:12px;display:flex;gap:8px;align-items:center;}
+.sheet-acts{display:flex;gap:10px;margin-top:6px;}
+.sheet-acts button{flex:1;padding:15px;border-radius:14px;font-size:15.5px;font-weight:800;}
+.sheet-acts .ok{background:var(--navy);color:#fff;}
+.sheet-acts .ed{background:#f3f5f8;color:#3a414c;border:1px solid var(--line);}
+.sheet-acts button:active{transform:scale(.98);}
+
+.edit-fld{margin-bottom:12px;}
+.edit-fld label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px;}
+.edit-fld input,.edit-fld select,.edit-fld textarea{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-weight:600;}
+.edit-fld textarea{resize:none;line-height:1.6;}
+.edit-row2{display:flex;gap:10px;} .edit-row2>*{flex:1;min-width:0;}
+.danger-btn{width:100%;padding:13px;border-radius:12px;background:var(--red-bg);color:var(--red);font-weight:800;border:1px solid #f3c9c9;}
+
+.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#f7f8fa;border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:9px;font-size:15px;font-weight:700;}
+.opt .oi{font-size:21px;}
+.opt .od{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px;}
+.opt:active{transform:scale(.98);}
+.opt.sel{border-color:var(--navy);background:#eef3fe;}
+.opt .ob{flex:1;}
+.opt .chkbox{width:24px;height:24px;border-radius:7px;border:2px solid #cdd0d6;display:flex;align-items:center;justify-content:center;color:transparent;font-size:15px;flex:none;}
+.opt.sel .chkbox{background:var(--navy);border-color:var(--navy);color:#fff;}
+
+/* settings */
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 2px;border-bottom:1px solid #f1f2f4;}
+.set-row .sl{font-size:14.5px;font-weight:700;} .set-row .sd{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5;}
+.switch{width:50px;height:30px;border-radius:16px;background:#d4d7dd;position:relative;flex:none;transition:.2s;}
+.switch.on{background:var(--green);}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.switch.on::after{left:23px;}
+.segbtns{display:flex;gap:6px;flex:none;}
+.segbtns button{padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;background:#f3f5f8;border:1px solid var(--line);color:#46505e;}
+.segbtns button.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+.set-h{font-size:12.5px;font-weight:800;color:var(--muted);margin:18px 2px 4px;letter-spacing:.3px;}
+.mem-item{display:flex;align-items:center;gap:9px;padding:11px 0;border-bottom:1px solid #f1f2f4;font-size:13.5px;}
+.mem-item .mt{flex:1;line-height:1.5;}
+.mem-item button{font-size:12px;font-weight:700;color:#5a616c;padding:6px 9px;border-radius:8px;background:#f3f5f8;border:1px solid var(--line);}
+
+/* ===== V0.5 コックピット：サマリー ===== */
+.summary{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:14px 15px;margin-top:8px;}
+.sum-top{display:flex;gap:14px;align-items:center;}
+.ring{position:relative;width:58px;height:58px;flex:none;}
+.ring svg{width:58px;height:58px;transform:rotate(-90deg);}
+.ring .rb{fill:none;stroke:#eceef1;stroke-width:3.6;}
+.ring .rf{fill:none;stroke:var(--green);stroke-width:3.6;stroke-linecap:round;transition:stroke-dasharray .5s;}
+.ring .rp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14.5px;font-weight:800;color:var(--green);}
+.ring .rp small{font-size:9px;margin-top:3px;}
+.sum-main{flex:1;min-width:0;}
+.sum-date{font-size:12px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px;}
+.sum-mode{font-size:11px;font-weight:800;background:#f3f5f8;border:1px solid var(--line);border-radius:9px;padding:3px 8px;color:#46505e;}
+.sum-line{font-size:14.5px;font-weight:700;margin-top:4px;}
+.sum-line b{font-size:18px;}
+.sum-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;}
+.schip{font-size:12px;font-weight:800;border-radius:9px;padding:5px 10px;background:#f3f5f8;border:1px solid var(--line);color:#46505e;}
+.schip:active{transform:scale(.96);}
+.schip.danger{background:var(--red-bg);color:var(--red);border-color:#f3c9c9;}
+.schip.warn{background:var(--amber-bg);color:var(--amber);border-color:#f1d9a8;}
+.sum-ok{font-size:12px;color:var(--green);font-weight:700;}
+.sum-ai{display:block;width:100%;text-align:left;font-size:12.5px;color:#3c4654;background:#f2f6ff;border:1px solid #e2ebfd;border-radius:10px;padding:8px 11px;margin-top:11px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ===== 今日の流れ（統合タイムライン） ===== */
+.tl{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:4px 6px;}
+.tl-row{display:flex;align-items:center;gap:10px;padding:9px 8px;}
+.tl-row+.tl-row{border-top:1px solid #f4f5f7;}
+.tl-time{font-size:12.5px;font-weight:800;color:var(--navy);width:44px;flex:none;text-align:right;}
+.tl-time.tl-late{color:var(--red);}
+.tl-dot{width:9px;height:9px;border-radius:50%;flex:none;}
+.tl-ev .tl-dot{background:#c9cdd4;}
+.tl-body{flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.4;}
+.tl-sub{font-size:11px;color:var(--muted);margin-top:1px;font-weight:600;}
+.tl-chk{flex:none;width:32px;height:32px;border-radius:50%;border:2px solid #cdd0d6;background:#fff;color:transparent;font-size:15px;display:flex;align-items:center;justify-content:center;}
+.tl-chk:active{transform:scale(.86);}
+.tl-past{opacity:.45;}
+.tl-now{display:flex;align-items:center;gap:8px;padding:3px 8px;}
+.tl-now .l{flex:1;height:2px;background:var(--red);border-radius:2px;}
+.tl-now .t{font-size:10.5px;font-weight:800;color:var(--red);flex:none;}
+.tl-del{color:#c7ccd3;font-size:16px;padding:0 4px;flex:none;}
+.tl-add{width:100%;text-align:center;color:var(--blue-d);font-weight:800;font-size:12.5px;padding:10px;}
+
+/* ===== 案件ミニ進捗 ===== */
+.pmini{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:11px 13px;margin-bottom:8px;}
+.pmini:active{transform:scale(.99);}
+.pm-top{display:flex;align-items:center;gap:8px;}
+.pm-dot{width:9px;height:9px;border-radius:50%;flex:none;}
+.pm-nm{flex:1;font-size:14px;font-weight:700;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pm-bar{display:flex;align-items:center;gap:9px;margin-top:8px;}
+.pm-bar .bar-track{flex:1;}
+.pm-pct{font-size:11.5px;font-weight:800;color:var(--muted);width:38px;text-align:right;flex:none;}
+
+/* ===== 保留折りたたみ・整理バナー ===== */
+.hold-details{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:4px 12px;}
+.hold-details summary{font-size:13px;font-weight:800;color:#5f6670;padding:9px 2px;cursor:pointer;}
+.hold-details[open] summary{border-bottom:1px solid #f1f2f4;margin-bottom:8px;}
+.clean-banner{width:100%;margin-top:14px;padding:13px;border-radius:13px;background:#eef3fe;border:1px solid #dde7fb;color:var(--blue-d);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;gap:10px;}
+.cb-skip{font-size:11.5px;color:var(--muted);text-decoration:underline;font-weight:700;}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + var(--safe-b) + 18px);
+  background:var(--navy);color:#fff;padding:12px 18px;border-radius:13px;font-size:13.5px;font-weight:700;z-index:80;
+  box-shadow:0 10px 30px rgba(14,24,48,.35);opacity:0;pointer-events:none;transition:.25s;max-width:92%;display:flex;align-items:center;gap:6px;}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(-4px);pointer-events:auto;}
+.toast .undo{color:#9fc3ff;font-weight:800;text-decoration:underline;padding:2px 4px;}
+
+.empty{text-align:center;color:var(--muted);font-size:13.5px;padding:26px 16px;background:var(--card);border-radius:var(--r);border:1px dashed #d8dbe0;line-height:1.8;}
+.note-box{font-size:12px;color:#7a818b;background:#f6f7f9;border:1px solid var(--line);border-radius:11px;padding:11px 13px;line-height:1.6;margin-top:6px;}
+.note-box b{color:#46505e;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">✈️</div>
+    <div>
+      <div class="nm">PILOT</div>
+      <div class="tg">話すだけ。あとはAI秘書が追いかける。</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <button class="mode-chip" id="modeChip" onclick="openMode()"><span class="dot"></span><span id="modeLabel">通常</span></button>
+    <button class="gear-btn" onclick="openSearch()">🔍</button>
+    <button class="gear-btn" onclick="openSettings()">⚙️</button>
+  </div>
+</header>
+
+<main>
+
+<!-- HOME -->
+<section class="view on" id="v-home">
+  <div id="summarySlot"></div>
+  <div class="sec"><span class="bar"></span>今やること</div>
+  <div id="heroSlot"></div>
+  <div class="sec"><span class="bar"></span>今日の流れ</div>
+  <div id="timelineSlot"></div>
+  <div class="sec" id="untimedHead"><span class="bar"></span>ほかにやる仕事 <span class="ct" id="todayCt"></span></div>
+  <div id="todayList"></div>
+  <div class="sec" id="projHead"><span class="bar"></span>案件の進捗 <span class="lk" onclick="go('proj')">すべて見る ›</span></div>
+  <div id="projStrip"></div>
+  <div class="sec" id="attnHead"><span class="bar" style="background:var(--red)"></span>気になること <span class="ct" id="stallCt"></span></div>
+  <div id="stallList"></div>
+  <div id="holdSlot"></div>
+  <div id="cleanupSlot"></div>
+</section>
+
+<!-- DEPOSIT -->
+<section class="view" id="v-deposit">
+  <div class="deposit-hd">
+    <div class="t">仕事を預ける</div>
+    <div class="s">話す・書くだけ。所属・相手・期限・次にやることはAIが整理します。</div>
+  </div>
+  <div class="miccircle" id="micCircle" onclick="toggleMic()">🎙️</div>
+  <div class="mic-cap" id="micCap">タップして話す</div>
+  <div class="dep-area">
+    <textarea id="depText" placeholder="例：佐藤さんにアトマイザーの見積を頼んだ。金曜までに返事がなければ午後に電話する"></textarea>
+    <div id="depPhoto"></div>
+    <button class="big-btn" onclick="submitDeposit()">🤖 AIに整理してもらう</button>
+  </div>
+  <div class="dep-tools">
+    <button onclick="document.getElementById('depText').focus()"><span class="ic">⌨️</span>文字で書く</button>
+    <button onclick="photoStub()"><span class="ic">📷</span>写真を撮る</button>
+    <button onclick="quickEgs()"><span class="ic">💡</span>例を入れる</button>
+  </div>
+  <div class="dep-eg">
+    <b>複数まとめてOK：</b><br>「明日田中さんに見積を送って、金曜までに返事がなければ電話。それとPVのロゴをデザイナーに頼む」
+  </div>
+</section>
+
+<!-- FOLLOW -->
+<section class="view" id="v-follow">
+  <div class="sec" style="margin-top:6px"><span class="bar"></span>フォロー（いま誰の番か）</div>
+  <div class="ftabs" id="ftabs"></div>
+  <div id="followBody"></div>
+</section>
+
+<!-- PROJECTS -->
+<section class="view" id="v-proj">
+  <div class="sec" style="margin-top:6px"><span class="bar"></span>案件（長期・工程管理） <span class="ct" id="projCt"></span></div>
+  <div id="projList"></div>
+</section>
+
+<!-- SECRETARY -->
+<section class="view" id="v-sec">
+  <div class="sec" style="margin-top:6px"><span class="bar"></span>AI秘書</div>
+  <div class="chips" id="quickChips"></div>
+  <div class="chat" id="chatLog"></div>
+</section>
+
+</main>
+
+<div class="chatbar hidden" id="chatBar">
+  <button class="mic" id="chatMic" onclick="chatVoice()">🎙️</button>
+  <input id="chatInput" placeholder="今日は何からやればいい？" onkeydown="if(event.key==='Enter')sendChat()">
+  <button class="send" onclick="sendChat()">↑</button>
+</div>
+
+<nav>
+  <button class="on" data-v="home" onclick="go('home')"><span class="ic">🏠</span>ホーム</button>
+  <button data-v="follow" onclick="go('follow')"><span class="ic">🔔</span>フォロー<span class="badge hidden" id="navFollowBadge"></span></button>
+  <button class="dep" data-v="deposit" onclick="go('deposit')"><span class="ic">🎙️</span>預ける</button>
+  <button data-v="proj" onclick="go('proj')"><span class="ic">📁</span>案件</button>
+  <button data-v="sec" onclick="go('sec')"><span class="ic">💬</span>秘書</button>
+</nav>
+
+<div class="scrim" id="scrim" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet" id="sheet"></div>
+</div>
+<div class="toast" id="toast"></div>
+<input type="file" id="importFile" accept="application/json" class="hidden" onchange="importData(event)">
+<input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden" onchange="onPhotoPick(event)">
+
+<script>
+/* =====================================================================
+   PILOT V0.2 — single-file MVP（P0修正版）
+   ===================================================================== */
+const DB_VERSION = 4;
+let TODAY = new Date();                  // ← 端末の現在日時を使用（固定日付を撤去）
+function syncToday(){ TODAY = new Date(); }
+const $ = s => document.querySelector(s);
+const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const escReg = s => String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+
+/* ワークスペースは固定ではなく利用者が自由に作成（データ化）。色はパレットから自動割当 */
+const PALETTE=['#2f8f6a','#a07c1d','#52822f','#4a68c8','#b5562f','#7a4fd0','#0e8a8a','#c0497a','#5a7a2f','#33608f'];
+function wsColor(name){ const w=((DB&&DB.workspaces)||[]).find(x=>x.name===name); return w?w.color:'#8a8f98'; }
+function wsNames(){ return ((DB&&DB.workspaces)||[]).map(w=>w.name); }
+function wsOptions(sel){ const ns=wsNames().slice(); if(!ns.includes('未分類'))ns.push('未分類'); return ns.map(n=>`<option ${n===sel?'selected':''}>${esc(n)}</option>`).join(''); }
+
+const BALL = {
+  self:{label:'自分が動く',cls:'self',icon:'🙋'},
+  other:{label:'相手を待つ',cls:'other',icon:'⏳'},
+  team:{label:'担当者が対応中',cls:'team',icon:'👥'},
+  cond:{label:'条件を待つ',cls:'cond',icon:'📦'},
+  unknown:{label:'担当を確認',cls:'unknown',icon:'❓'},
+};
+const MODES = {
+  normal:{label:'通常',cls:'',icon:'🟢',desc:'通常の優先順位で提案します'},
+  busy:{label:'忙しい',cls:'busy',icon:'🔥',desc:'重要・緊急だけに絞ります'},
+  out:{label:'外出中',cls:'out',icon:'🚶',desc:'電話・音声・短時間作業を優先'},
+  focus:{label:'集中',cls:'focus',icon:'🎯',desc:'まとまった作業を1件だけ提示'},
+  tired:{label:'疲れ気味',cls:'tired',icon:'😮‍💨',desc:'5〜15分で終わる重要作業だけ'},
+  off:{label:'今日は休む',cls:'off',icon:'🌙',desc:'緊急以外の通知を止めます'},
+};
+const TERMINAL = ['done','archived','hold'];   // ← ホーム/フォローから除外する状態
+
+/* ---------- state ---------- */
+let DB = load();
+let mode = DB.mode || 'normal';
+let curView = 'home';
+let followTab = 'today';
+let skipToday = new Set();      // 「別の仕事」で今日だけ後回しにしたID
+let lastUndo = null;
+let notifyTimer = null;
+
+function load(){
+  let raw=null; try{ raw=localStorage.getItem('pilot_db'); }catch(e){}
+  if(raw){
+    try{
+      let d=JSON.parse(raw);
+      if(!d.version||d.version<DB_VERSION) d=migrate(d);   // ← 初期化せず移行（データを失わない）
+      d.onboarded = d.onboarded!==false;
+      return ensureSettings(d);
+    }catch(e){ try{ localStorage.setItem('pilot_db_corrupt', raw); }catch(_){} }
+  }
+  return bootstrapDB();   // 新規利用者：オンボーディングへ
+}
+function migrate(d){
+  // 移行前に自動バックアップ（復元できるように）
+  try{ localStorage.setItem('pilot_db_premigrate_v'+(d.version||1), JSON.stringify(d)); }catch(e){}
+  // ワークスペース未定義なら既存データから復元（固定名に依存しない）
+  if(!Array.isArray(d.workspaces)){
+    const names=[]; (d.tasks||[]).forEach(t=>{ if(t.ws&&!names.includes(t.ws))names.push(t.ws); });
+    (d.projects||[]).forEach(p=>{ if(p.ws&&!names.includes(p.ws))names.push(p.ws); });
+    ['三高産業','REIKI','OLIVE','プライベート'].forEach(n=>{ if(!names.includes(n))names.push(n); });
+    if(!names.includes('未分類'))names.push('未分類');
+    d.workspaces=names.map((n,i)=>({name:n,color:PALETTE[i%PALETTE.length]}));
+  }
+  (d.schedule||[]).forEach(s=>{ if(!s.date)s.date=dayKey(TODAY); });   // 予定に日付を付与
+  d.onboarded = true; d.version=DB_VERSION;
+  return d;
+}
+function bootstrapDB(){
+  const workspaces=['仕事','プライベート','未分類'].map((n,i)=>({name:n,color:PALETTE[i%PALETTE.length]}));
+  return ensureSettings({version:DB_VERSION,onboarded:false,workspaces,tasks:[],projects:[],schedule:[],memory:[],learned:[],notified:[],mode:'normal',lastOpen:TODAY.toISOString(),lastCleanup:null,chat:[]});
+}
+function ensureSettings(d){
+  d.settings = Object.assign({notify:true, strength:'std', privacy:'name', morningBrief:true, nightReview:true, workStart:'09:00', workEnd:'18:00', aiModel:'claude-opus-4-8'}, d.settings||{});
+  d.memory=d.memory||[]; d.learned=d.learned||[]; d.notified=d.notified||[]; d.chat=(d.chat||[]).filter(m=>!m.typing);
+  if(!Array.isArray(d.workspaces)||!d.workspaces.length){ d.workspaces=['仕事','プライベート','未分類'].map((n,i)=>({name:n,color:PALETTE[i%PALETTE.length]})); }
+  if(!d.workspaces.some(w=>w.name==='未分類'))d.workspaces.push({name:'未分類',color:'#8a8f98'});
+  return d;
+}
+function save(){
+  DB.mode=mode; DB.version=DB_VERSION;
+  // 「考え中…」の一時バブルは保存しない（awaiting中に他のsaveが走っても残留させない）
+  const out=(DB.chat&&DB.chat.some(m=>m.typing))?Object.assign({},DB,{chat:DB.chat.filter(m=>!m.typing)}):DB;
+  localStorage.setItem('pilot_db', JSON.stringify(out));
+}
+
+/* ---------- date helpers ---------- */
+function dPlus(n){ const d=new Date(TODAY); d.setDate(d.getDate()+n); d.setHours(18,0,0,0); return d.toISOString(); }
+function atTime(n,h,m){ const d=new Date(TODAY); d.setDate(d.getDate()+n); d.setHours(h,m||0,0,0); return d.toISOString(); }
+function addD(n){ const d=new Date(TODAY); d.setDate(d.getDate()+n); d.setHours(0,0,0,0); return d; }
+function daysSince(iso){ if(!iso) return 0; return Math.floor((startOfDay(TODAY)-startOfDay(new Date(iso)))/86400000); }
+function startOfDay(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
+function dayKey(d){ return startOfDay(d||TODAY).toDateString(); }
+function statusJa(s){ return {now:'今やる',wait:'待っている',warn:'注意',done:'完了',hold:'保留',archived:'対応不要'}[s]||s; }
+function isOverdue(iso){ return iso && new Date(iso) < TODAY; }
+function fmtDue(iso){
+  if(!iso) return '期限なし';
+  const d=new Date(iso), dd=Math.round((startOfDay(d)-startOfDay(TODAY))/86400000);
+  const hm=(d.getHours()||d.getMinutes())?` ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`:'';
+  let day=dd===0?'今日':dd===1?'明日':dd===-1?'昨日':dd<0?`${-dd}日超過`:dd<7?`${dd}日後`:`${d.getMonth()+1}/${d.getDate()}`;
+  return day+hm;
+}
+const WD=['日','月','火','水','木','金','土'];
+function fmtFull(d){ return `${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})`; }
+function toLocalInput(iso){ if(!iso) return ''; const d=new Date(iso); const p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+function fromLocalInput(v){ if(!v)return null; const d=new Date(v); return isNaN(d)?null:d.toISOString(); }
+
+/* =====================================================================
+   SEED（実日付基準で相対生成）
+   ===================================================================== */
+function seed(){
+  let id=0; const uid=()=>'t'+(++id);
+  const tasks=[
+    {id:uid(),ws:'三高産業',title:'○○社へ在庫回答',status:'now',ball:'self',next:'在庫数を確認して電話で回答する',due:atTime(0,10,0),mins:5,prio:5,reason:'午後の配送手配に影響します',updated:dPlus(0)},
+    {id:uid(),ws:'三高産業',title:'○○社へ見積を送付',status:'now',ball:'self',next:'見積書PDFをメールで送る',due:atTime(0,17,0),mins:15,prio:4,updated:dPlus(-1)},
+    {id:uid(),ws:'REIKI',title:'PV素材を確認',status:'now',ball:'self',next:'届いた素材を3点チェックする',due:atTime(0,21,0),mins:30,prio:3,updated:dPlus(-1)},
+    {id:uid(),ws:'OLIVE',title:'キャンペーン予約者へ返信',status:'now',ball:'self',next:'予約者3名へLINEで返信',due:atTime(0,19,0),mins:10,prio:3,updated:dPlus(-1)},
+    {id:uid(),ws:'プライベート',title:'家族の予定を確認',status:'now',ball:'self',next:'週末の予定をカレンダーで確認',due:atTime(0,20,0),mins:5,prio:2,updated:dPlus(-1)},
+    {id:uid(),ws:'三高産業',person:'田中商事 田中さん',title:'在庫確認の回答',status:'wait',ball:'other',next:'回答が来たら発注数を確定',due:dPlus(-1),nextCheck:atTime(-1,15,0),mins:5,prio:4,answer:'none',updated:dPlus(-4),follows:[fday(-13)+' 在庫確認を依頼',fday(-10)+' 1回目の確認',fday(-4)+' 2回目の確認（未回答）']},
+    {id:uid(),ws:'三高産業',person:'山本さん',title:'資材の在庫回答',status:'wait',ball:'other',next:'回答後に発注書を作成',due:atTime(0,15,0),nextCheck:atTime(0,16,0),mins:5,prio:3,answer:'none',updated:dPlus(0),follows:[fday(0)+' 在庫確認を依頼']},
+    {id:uid(),ws:'REIKI',person:'佐藤さん',title:'アトマイザー見積の回答',status:'wait',ball:'other',next:'見積が来たら発注判断',due:dPlus(2),nextCheck:atTime(2,15,0),mins:5,prio:3,answer:'partial',ansOK:['在庫数（在庫あり）'],ansNG:['アトマイザー見積','納期','来週の訪問日時'],updated:dPlus(-2),follows:[fday(-13)+' 見積を依頼',fday(-10)+' 1回目の確認',fday(-7)+' 一部回答（在庫のみ）',fday(-6)+' 納期について追加確認']},
+    {id:uid(),ws:'REIKI',person:'デザイナー 川口さん',title:'AXIVEロゴデータの提出',status:'wait',ball:'team',next:'ロゴ受領後、最終編集に反映',due:dPlus(0),nextCheck:atTime(0,17,0),mins:5,prio:5,answer:'none',updated:dPlus(-3),project:'p_reiki_pv',follows:[fday(-5)+' ロゴデータを依頼',fday(-3)+' 1回目の確認']},
+    {id:uid(),ws:'三高産業',title:'入金確認後に出荷手配',status:'wait',ball:'cond',next:'入金を確認したら出荷を手配',due:dPlus(3),nextCheck:dPlus(3),mins:10,prio:2,answer:'none',updated:dPlus(-1),condText:'○○社からの入金待ち'},
+    {id:uid(),ws:'OLIVE',title:'ホームページ制作を進める',status:'warn',ball:'self',next:'掲載する室内写真を3枚選ぶ',due:null,mins:10,prio:3,updated:dPlus(-5),deferCount:1,project:'p_olive_hp',stallReason:'掲載写真が未決定'},
+    {id:uid(),ws:'三高産業',title:'倉庫の棚卸し表をまとめる',status:'warn',ball:'self',next:null,due:null,mins:null,prio:2,updated:dPlus(-8),deferCount:3,stallReason:'作業が大きく、3回延期されています'},
+    {id:uid(),ws:'REIKI',title:'PV構成を作成',status:'done',ball:'self',next:null,due:dPlus(-3),mins:60,prio:3,updated:dPlus(-3),project:'p_reiki_pv'},
+  ];
+  const projects=[
+    {id:'p_reiki_pv',ws:'REIKI',name:'REIKI会社PV',blocker:'AXIVEロゴデータが未提出',current:'最終編集',next:'デザイナーへ確認',due:dPlus(17),updated:dPlus(-1),
+      steps:[{n:'構成作成',s:'done'},{n:'キービジュアル作成',s:'done'},{n:'素材収集',s:'prog'},{n:'動画編集',s:'prog'},{n:'ナレーション',s:'todo'},{n:'最終確認',s:'todo'}]},
+    {id:'p_olive_hp',ws:'OLIVE',name:'OLIVEホームページ制作',blocker:'掲載写真が未決定（5日間更新なし）',current:'コンテンツ準備',next:'室内写真を3枚選ぶ',due:dPlus(14),updated:dPlus(-5),
+      steps:[{n:'要件整理',s:'done'},{n:'デザイン案',s:'done'},{n:'写真選定',s:'prog'},{n:'原稿作成',s:'todo'},{n:'コーディング',s:'todo'},{n:'公開',s:'todo'}]},
+    {id:'p_sankou_q3',ws:'三高産業',name:'第3四半期 新商品仕入れ',blocker:null,current:'見積比較',next:'2社の見積を比較表にする',due:dPlus(20),updated:dPlus(0),
+      steps:[{n:'候補リスト作成',s:'done'},{n:'見積依頼',s:'done'},{n:'見積比較',s:'prog'},{n:'社内承認',s:'todo'},{n:'発注',s:'todo'}]},
+  ];
+  const dk=dayKey(TODAY);
+  const schedule=[
+    {date:dk,t:'10:00',ev:'取引先訪問（○○社）'},
+    {date:dk,t:'14:00',ev:'商品課 打ち合わせ'},
+    {date:dk,t:'19:30',ev:'REIKI 作業（60分確保）'},
+  ];
+  const memory=['三高産業の仕事は日中を優先','REIKIの制作作業は夜（19:30〜）','家族の予定は原則変更しない','佐藤さんへの確認は電話が多い','PV制作は通常60〜90分必要'];
+  const learned=[{person:'佐藤さん',ws:'REIKI',count:5},{person:'田中商事',ws:'三高産業',count:5},{person:'田中さん',ws:'三高産業',count:3},{person:'川口さん',ws:'REIKI',count:3},{person:'山本さん',ws:'三高産業',count:4}];
+  const workspaces=['三高産業','REIKI','OLIVE','プライベート','未分類'].map((n,i)=>({name:n,color:PALETTE[i%PALETTE.length]}));
+  projects.forEach(recomputeProject);
+  return ensureSettings({version:DB_VERSION,onboarded:true,workspaces,tasks,projects,schedule,memory,learned,notified:[],mode:'normal',lastOpen:TODAY.toISOString(),lastCleanup:null,chat:[]});
+}
+function fday(n){ const d=new Date(TODAY); d.setDate(d.getDate()+n); return `${d.getMonth()+1}/${d.getDate()}`; }
+
+/* =====================================================================
+   ROUTER
+   ===================================================================== */
+function go(v){
+  syncToday(); curView=v;
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  $('#v-'+v).classList.add('on');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  $('#chatBar').classList.toggle('hidden',v!=='sec');
+  window.scrollTo({top:0,behavior:'instant'});
+  if(v==='deposit'){ const s=document.querySelector('.deposit-hd .s'); if(s)s.innerHTML=aiEnabled()?'話す・書くだけ。<b>Claude</b>が所属・相手・期限・次にやることを整理します。':'話す・書くだけ。所属・相手・期限・次にやることはAIが整理します。'; }
+  if(v==='home')renderHome(); if(v==='follow')renderFollow(); if(v==='proj')renderProjects(); if(v==='sec')renderSecretary();
+}
+function refreshCur(){ if(curView==='home')renderHome();else if(curView==='follow')renderFollow();else if(curView==='proj')renderProjects(); updateBadges(); }
+
+/* =====================================================================
+   状態フィルタ（保留/完了/対応不要を確実に除外）
+   ===================================================================== */
+function activeTasks(){ return DB.tasks.filter(t=>!TERMINAL.includes(t.status)); }     // hold含めない
+function holdTasks(){ return DB.tasks.filter(t=>t.status==='hold'); }
+function waitingTasks(){ return DB.tasks.filter(t=>!TERMINAL.includes(t.status) && (t.ball==='other'||t.ball==='team'||t.ball==='cond')); }
+
+/* =====================================================================
+   HOME
+   ===================================================================== */
+function priorityScore(t){
+  let s=0; const dd=t.due?(new Date(t.due)-TODAY)/3600000:999;
+  if(isOverdue(t.due))s+=30;else if(dd<=3)s+=28;else if(dd<=8)s+=22;else if(dd<=24)s+=15;else if(dd<=72)s+=8;
+  s+=(t.prio||0)*5;
+  if(t.ball==='self'&&t.next)s+=8;
+  if(t.project)s+=6;
+  if(mode==='tired'&&t.mins&&t.mins<=15)s+=10;
+  if(mode==='out'&&(t.mins<=15||/電話|連絡|返信/.test(t.next||'')))s+=10;
+  if(mode==='busy'&&(isOverdue(t.due)||t.prio>=4))s+=8;
+  return s;
+}
+function heroPool(){
+  let pool=activeTasks().filter(t=>t.ball==='self'&&t.status==='now'&&!skipToday.has(t.id));
+  if(mode==='tired')pool=pool.filter(t=>!t.mins||t.mins<=15);
+  if(mode==='out')pool=pool.filter(t=>!t.mins||t.mins<=15||/電話|連絡|返信/.test(t.next||''));
+  if(!pool.length)pool=activeTasks().filter(t=>t.ball==='self'&&t.status==='now'&&!skipToday.has(t.id));
+  pool.sort((a,b)=>priorityScore(b)-priorityScore(a));
+  return pool;
+}
+function pickHero(){ const p=heroPool(); return p[0]||null; }
+function nextHero(){
+  // 「別の仕事」: 現在のヒーローを今日だけ後回しにし次点を出す
+  const h=pickHero(); if(h) skipToday.add(h.id);
+  if(!heroPool().length){ skipToday.clear(); toast('ほかに今やる仕事はありません'); }
+  renderHome();
+}
+
+function renderHome(){
+  syncToday();
+  DB.projects.forEach(recomputeProject);
+  const hero=pickHero();
+
+  // ---- サマリー（進捗リング＋フォローチップ＋AI一言） ----
+  const doneToday=DB.tasks.filter(t=>t.status==='done'&&daysSince(t.updated)===0).length;
+  const selfNow=activeTasks().filter(t=>t.ball==='self'&&t.status==='now');
+  const totalToday=doneToday+selfNow.length;
+  const pct=totalToday?Math.round(doneToday/totalToday*100):0;
+  const fa=waitingTasks();
+  const overdueN=fa.filter(t=>isOverdue(t.nextCheck||t.due)).length;
+  const todayChkN=fa.filter(t=>t.nextCheck&&fmtDue(t.nextCheck).startsWith('今日')&&!isOverdue(t.nextCheck)).length;
+  const notes=buildAINote();
+  const chips=[];
+  if(overdueN)chips.push(`<button class="schip danger" onclick="go('follow');setFollowTab('today')">🔴 確認超過 ${overdueN}</button>`);
+  if(todayChkN)chips.push(`<button class="schip warn" onclick="go('follow');setFollowTab('today')">📅 今日確認 ${todayChkN}</button>`);
+  if(fa.length)chips.push(`<button class="schip" onclick="go('follow');setFollowTab('waiting')">⏳ 返事待ち ${fa.length}</button>`);
+  $('#summarySlot').innerHTML=`<div class="summary">
+    <div class="sum-top">
+      <div class="ring"><svg viewBox="0 0 36 36"><circle class="rb" cx="18" cy="18" r="15.9"/><circle class="rf" cx="18" cy="18" r="15.9" stroke-dasharray="${pct} 100"/></svg><div class="rp">${pct}<small>%</small></div></div>
+      <div class="sum-main">
+        <div class="sum-date">${fmtFull(TODAY)}<button class="sum-mode" onclick="openMode()">${MODES[mode].icon} ${MODES[mode].label}</button></div>
+        <div class="sum-line">今日 <b>${doneToday}</b>/${totalToday}件 完了 ・ 残り<b>${selfNow.length}</b>件</div>
+        <div class="sum-chips">${chips.join('')||'<span class="sum-ok">✓ フォローは順調です</span>'}</div>
+      </div>
+    </div>
+    ${notes.length?`<button class="sum-ai" onclick="openAINotes()">💬 ${esc(notes[0])}</button>`:''}
+  </div>`;
+
+  // ---- 今やること（ヒーロー） ----
+  const slot=$('#heroSlot');
+  if(!hero){
+    slot.innerHTML=`<div class="hero hero-empty"><div class="lab">✓ 今やる仕事はありません</div>
+      <div class="ttl">自分の番の仕事は片付きました</div>
+      <div class="why">📌 返事待ちはAIが追跡しています。新しい仕事は「預ける」から登録できます。</div></div>`;
+  }else{
+    const reasons=[];
+    if(isOverdue(hero.due))reasons.push('期限を過ぎています');else if(hero.due)reasons.push(`期限が ${fmtDue(hero.due)}`);
+    if(hero.reason)reasons.push(hero.reason); if(hero.mins)reasons.push(`${hero.mins}分で完了できます`);
+    slot.innerHTML=`<div class="hero">
+      <div class="lab">⚡ 今やること <span class="ws">${esc(hero.ws)}</span></div>
+      <div class="ttl" onclick="taskActionSheet('${hero.id}')">${esc(hero.title)}</div>
+      <div class="meta">
+        ${hero.due?`<span class="pill ${isOverdue(hero.due)?'due':''}">🕐 ${fmtDue(hero.due)}</span>`:''}
+        ${hero.mins?`<span class="pill">⏱ 約${hero.mins}分</span>`:''}
+        <span class="pill">📋 残り${selfNow.length}件</span>
+      </div>
+      ${hero.next?`<div class="why">👉 次にやること：${esc(hero.next)}</div>`:''}
+      ${reasons.length?`<div class="why">💡 ${esc(reasons.join('・'))}</div>`:''}
+      <div class="acts">
+        <button class="start" onclick="completeTask('${hero.id}')">✅ 完了した</button>
+        <button class="alt" onclick="nextHero()">別の仕事</button>
+        <button class="alt" style="flex:.5" onclick="taskActionSheet('${hero.id}')">…</button>
+      </div></div>`;
+  }
+
+  // ---- 今日の流れ（予定＋期限付きタスクの統合タイムライン） ----
+  $('#timelineSlot').innerHTML=timelineHTML(hero);
+
+  // ---- 今日中にやる（時刻なし）＋今日完了した仕事（減光） ----
+  let untimed=activeTasks().filter(t=>t.ball==='self'&&t.status==='now'&&!(t.due&&fmtDue(t.due).startsWith('今日'))&&(!hero||t.id!==hero.id));
+  untimed.sort((a,b)=>priorityScore(b)-priorityScore(a)); untimed=untimed.slice(0,5);
+  const doneRows=DB.tasks.filter(t=>t.status==='done'&&daysSince(t.updated)===0).slice(-3);
+  $('#todayCt').textContent=untimed.length?`${untimed.length}件`:'';
+  $('#untimedHead').classList.toggle('hidden',!untimed.length&&!doneRows.length);
+  $('#todayList').innerHTML=untimed.map(miniRow).join('')
+    +doneRows.map(t=>`<div class="mini done" style="border-left-color:${wsColor(t.ws)}">
+      <button class="chk" onclick="reopenTask('${t.id}')" title="未完了に戻す">✓</button>
+      <div class="m-body"><div class="m-ttl">${esc(t.title)}</div>
+      <div class="m-sub"><span class="ws" style="color:${wsColor(t.ws)}">${esc(t.ws)}</span><span class="tag done">完了</span></div></div></div>`).join('');
+
+  // ---- 案件の進捗（最大3件・注意が必要な順） ----
+  const strip=projStripHTML();
+  $('#projHead').classList.toggle('hidden',!strip);
+  $('#projStrip').innerHTML=strip;
+
+  // ---- 気になること（最重要1枚＋残りはコンパクト行） ----
+  const stalled=detectStalls();
+  $('#stallCt').textContent=stalled.length?`${stalled.length}件`:'';
+  $('#attnHead').classList.toggle('hidden',!stalled.length);
+  $('#stallList').innerHTML=stalled.length?(stallCard(stalled[0])
+    +stalled.slice(1).map(s=>`<div class="mini" style="border-left-color:var(--red)" onclick="openStallSheet('${s.t.id}')">
+      <span style="font-size:17px;flex:none">⚠️</span>
+      <div class="m-body"><div class="m-ttl">${esc(s.t.title)}</div><div class="m-sub"><span>${esc(s.reason)}</span></div></div>
+      <span class="m-edit">›</span></div>`).join('')):'';
+
+  // ---- 保留中（折りたたみ） ----
+  const holds=holdTasks();
+  $('#holdSlot').innerHTML=holds.length?`<details class="hold-details"><summary>⏸ 保留中 ${holds.length}件</summary>
+    ${holds.map(t=>`<div class="mini hold-row" style="border-left-color:${wsColor(t.ws)}">
+      <button class="chk" onclick="resumeTask('${t.id}')" title="再開">▶</button>
+      <div class="m-body" onclick="openEdit('${t.id}')"><div class="m-ttl">${esc(t.title)}</div>
+      <div class="m-sub"><span class="ws" style="color:${wsColor(t.ws)}">${esc(t.ws)}</span><span class="tag hold">保留中</span></div></div>
+      <span class="m-edit" onclick="openEdit('${t.id}')">✎</span></div>`).join('')}</details>`:'';
+
+  // ---- 週次クリーンアップ（最下部の1行バナー） ----
+  const needClean=!DB.lastCleanup||daysSince(DB.lastCleanup)>=7;
+  const cleanCand=needClean?cleanupCandidates().length:0;
+  $('#cleanupSlot').innerHTML=(needClean&&cleanCand)?`<button class="clean-banner" onclick="weeklyCleanup()">🧹 今週の整理 ${cleanCand}件 → 始める
+    <span class="cb-skip" onclick="event.stopPropagation();snoozeCleanup()">今週はスキップ</span></button>`:'';
+
+  updateBadges();
+}
+const p2=n=>String(n).padStart(2,'0');
+function timelineHTML(hero){
+  const items=[];
+  (DB.schedule||[]).forEach((s,i)=>{ if(s.date===dayKey(TODAY))items.push({t:s.t,kind:'ev',ev:s.ev,idx:i}); });
+  activeTasks().filter(t=>t.ball==='self'&&t.due&&fmtDue(t.due).startsWith('今日')).forEach(t=>{
+    const d=new Date(t.due); items.push({t:`${p2(d.getHours())}:${p2(d.getMinutes())}`,kind:'task',task:t});
+  });
+  items.sort((a,b)=>a.t.localeCompare(b.t));
+  const nowT=`${p2(TODAY.getHours())}:${p2(TODAY.getMinutes())}`;
+  const nowLine=`<div class="tl-now"><span class="t">現在 ${nowT}</span><span class="l"></span></div>`;
+  let html='',nowIn=false;
+  items.forEach(it=>{
+    if(!nowIn&&it.t>nowT){ html+=nowLine; nowIn=true; }
+    if(it.kind==='ev'){
+      html+=`<div class="tl-row tl-ev ${it.t<nowT?'tl-past':''}"><span class="tl-time">${it.t}</span><span class="tl-dot"></span><div class="tl-body">${esc(it.ev)}</div><span class="tl-del" onclick="delSchedule(${it.idx})">×</span></div>`;
+    }else{
+      const t=it.task,over=isOverdue(t.due);
+      html+=`<div class="tl-row"><span class="tl-time ${over?'tl-late':''}">${it.t}</span><span class="tl-dot" style="background:${wsColor(t.ws)}"></span>
+        <div class="tl-body" onclick="taskActionSheet('${t.id}')">${hero&&t.id===hero.id?'⚡ ':''}${esc(t.title)}${over?' <span class="over">超過</span>':''}
+        <div class="tl-sub">${esc(t.ws)}${t.mins?` ・約${t.mins}分`:''}</div></div>
+        <button class="tl-chk" onclick="completeTask('${t.id}')">✓</button></div>`;
+    }
+  });
+  if(items.length&&!nowIn)html+=nowLine;
+  if(!items.length)html=`<div class="tl-row"><div class="tl-body" style="color:var(--muted)">今日の予定・時刻付きの仕事はありません</div></div>`;
+  html+=`<button class="tl-add" onclick="addSchedule()">＋ 予定を追加</button>`;
+  return `<div class="tl">${html}</div>`;
+}
+function projStripHTML(){
+  const sev={stall:0,warn:1,ok:2,hold:3,done:9};
+  const list=DB.projects.filter(p=>p.state!=='done').sort((a,b)=>(sev[a.state]??5)-(sev[b.state]??5)).slice(0,3);
+  return list.map(p=>{const ps=PJ_STATE[p.state]||PJ_STATE.ok;return `<div class="pmini" onclick="go('proj')">
+    <div class="pm-top"><span class="pm-dot" style="background:${wsColor(p.ws)}"></span><span class="pm-nm">${esc(p.name)}</span>${p.blocker?'<span title="ブロッカーあり">🚧</span>':''}<span class="${ps.c}">${ps.l}</span></div>
+    <div class="pm-bar"><div class="bar-track"><div class="bar-fill" style="width:${p.progress}%"></div></div><span class="pm-pct">${p.progress}%</span></div>
+  </div>`;}).join('');
+}
+function openAINotes(){
+  openSheet(`<h3>💬 AI秘書より</h3>`+buildAINote().map(n=>`<div class="opt" style="display:block"><div class="ob">${esc(n)}</div></div>`).join('')
+    +`<div class="sheet-acts"><button class="ok" onclick="closeSheet()">閉じる</button></div>`);
+}
+function reopenTask(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return;
+  // 定期タスクの完了時に自動生成した次回分を消す（重複増殖の防止）
+  if(t.spawnedNext){ const i=DB.tasks.findIndex(x=>x.id===t.spawnedNext); if(i>=0)DB.tasks.splice(i,1); t.spawnedNext=null; }
+  if(t.prevNext){ t.next=t.prevNext; t.prevNext=null; }   // 「次にやること」を復元
+  t.status='now'; t.ball='self'; t.updated=TODAY.toISOString();
+  save(); toast('未完了に戻しました'); refreshCur();
+}
+function taskActionSheet(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return;
+  openSheet(`<h3>${esc(t.title)}</h3>
+    <p class="desc">${esc(t.ws)} ／ ${t.due?'期限 '+fmtDue(t.due):'期限なし'}${t.person?' ／ '+esc(t.person):''}</p>
+    ${t.next?`<div class="next" style="margin-bottom:12px">👉 <b>次にやること</b>：${esc(t.next)}</div>`:''}
+    <button class="opt" onclick="completeTask('${t.id}');closeSheet()"><span class="oi">✅</span><span class="ob">完了した</span></button>
+    <button class="opt" onclick="moveTomorrow('${t.id}')"><span class="oi">⏰</span><span class="ob">明日へ移す</span></button>
+    <button class="opt" onclick="openEdit('${t.id}')"><span class="oi">✎</span><span class="ob">内容を編集<div class="od">期限・相手・写真など</div></span></button>
+    <button class="opt" onclick="setHold('${t.id}');closeSheet()"><span class="oi">⏸</span><span class="ob">保留にする</span></button>`);
+}
+function moveTomorrow(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return;
+  const nd=addD(1); if(t.due){const o=new Date(t.due);nd.setHours(o.getHours(),o.getMinutes(),0,0);}else nd.setHours(18,0,0,0);
+  t.due=nd.toISOString(); t.deferCount=(t.deferCount||0)+1; t.updated=TODAY.toISOString();
+  save(); closeSheet(); toast('明日へ移しました'); refreshCur();
+}
+function openStallSheet(id){
+  const s=detectStalls().find(x=>x.t.id===id); if(!s)return;
+  openSheet(stallCard(s));
+}
+
+function miniRow(t){
+  return `<div class="mini" style="border-left-color:${wsColor(t.ws)}" id="row-${t.id}">
+    <button class="chk" onclick="completeTask('${t.id}')">✓</button>
+    <div class="m-body" onclick="taskActionSheet('${t.id}')">
+      <div class="m-ttl">${esc(t.title)}${t.photo?' 📎':''}</div>
+      <div class="m-sub"><span class="ws" style="color:${wsColor(t.ws)}">${esc(t.ws)}</span>
+        ${t.due?`<span>🕐 ${fmtDue(t.due)}</span>`:''}${t.mins?`<span>⏱${t.mins}分</span>`:''}${ballBadge(t.ball)}</div>
+      ${t.next?`<div class="next">👉 <b>次にやること</b>：${esc(t.next)}</div>`:''}
+    </div>
+    <span class="m-edit" onclick="openEdit('${t.id}')">✎</span>
+  </div>`;
+}
+function ballBadge(b){ const x=BALL[b]||BALL.self; return `<span class="ball ${x.cls}">${x.icon} ${x.label}</span>`; }
+
+function detectStalls(){
+  const out=[];
+  activeTasks().forEach(t=>{
+    let reason=null,kind=null;
+    if(t.ball==='unknown'){reason='誰が動く番か決まっていません';kind='unknown';}
+    else if(t.ball==='self'&&!t.next){reason='次の行動が決まっていません';kind='nonext';}
+    else if(isOverdue(t.due)&&t.ball==='self'){reason=`期限を ${daysSince(t.due)||1}日過ぎています`;kind='overdue';}
+    else if((t.deferCount||0)>=3){reason=`${t.deferCount}回延期されています`;kind='defer';}
+    else if(t.ball==='self'&&daysSince(t.updated)>=4){reason=`${daysSince(t.updated)}日間更新されていません`;kind='stale';}
+    else if((t.ball==='other'||t.ball==='team')&&!t.nextCheck){reason='相手待ちですが次回確認日が未設定';kind='nocheck';}
+    if(reason)out.push({t,reason,kind});
+  });
+  const sw=x=>(x.kind==='unknown'?10:0)+(x.t.prio||0);   // 担当不明は追跡不能なので最優先で見せる
+  out.sort((a,b)=>sw(b)-sw(a)||daysSince(b.t.updated)-daysSince(a.t.updated));
+  return out.slice(0,4);
+}
+function stallCard({t,reason,kind}){
+  // シート内から呼ばれても閉じるよう、状態変更ボタンには closeSheet() を付ける（ホーム直置きでは無害）
+  let sol,acts;
+  if(kind==='defer'){ sol='この仕事が進まない理由を選ぶと、AIが進め方を組み直します。';
+    acts=`<button class="primary" onclick="openDeferReasons('${t.id}')">進め方を相談</button><button onclick="setHold('${t.id}');closeSheet()">今週は保留</button>`;
+  }else if(kind==='nonext'){ sol=`${esc(t.title)} には次の行動がありません。最初の10分の作業を作りますか？`;
+    acts=`<button class="primary" onclick="askNext('${t.id}')">最初の一手を作る</button><button onclick="markNoNeed('${t.id}');closeSheet()">対応不要</button>`;
+  }else if(kind==='nocheck'){ sol='相手待ちですが、いつ確認するか決まっていません。次回確認日を入れましょう。';
+    acts=`<button class="primary" onclick="openEdit('${t.id}')">確認日を入れる</button><button onclick="markNoNeed('${t.id}');closeSheet()">追跡しない</button>`;
+  }else if(kind==='unknown'){ sol='誰が動く番か決まっていません。担当を設定しましょう。';
+    acts=`<button class="primary" onclick="openEdit('${t.id}')">担当を設定</button><button onclick="markNoNeed('${t.id}');closeSheet()">対応不要</button>`;
+  }else{ const why=t.stallReason?`${esc(t.stallReason)}が原因で`:'';
+    sol=t.next?`${why}止まっています。最初の作業「${esc(t.next)}」から進めますか？`:`${why}止まっています。最初の10分の作業に分割しますか？`;
+    acts=`<button class="primary" onclick="${t.next?`startTask('${t.id}');closeSheet()`:`applyDefer('${t.id}','big')`}">${t.next?'これから始める':'10分に分割'}</button><button onclick="setHold('${t.id}');closeSheet()">今週は保留</button><button onclick="markNoNeed('${t.id}');closeSheet()">対応不要</button>`;
+  }
+  return `<div class="stall"><div class="h">⚠️ ${esc(t.title)}<span class="m-sub" style="margin-left:auto">${esc(t.ws)}</span></div>
+    <div class="sub">${esc(reason)}</div><div class="sol">${sol}</div><div class="acts">${acts}</div></div>`;
+}
+function buildAINote(){
+  const notes=[]; const fa=waitingTasks();
+  const overdueChk=fa.filter(t=>isOverdue(t.nextCheck||t.due));
+  const urgent=activeTasks().filter(t=>t.ball==='self'&&t.status==='now'&&(isOverdue(t.due)||(t.due&&fmtDue(t.due).startsWith('今日')&&t.prio>=4)));
+  if(mode==='off')notes.push('今日は休む設定です。緊急の1件以外は通知を止めています。');
+  if(urgent.length)notes.push(`午前中は ${urgent[0].ws} の期限付き業務（${urgent[0].title}）を最優先にしてください。`);
+  const sato=fa.find(t=>/佐藤/.test(t.person||'')&&t.answer==='partial');
+  if(sato)notes.push(`佐藤さんへ電話する際、未回答が${(sato.ansNG||[]).length}件あります。フォロー画面でまとめて確認できます。`);
+  if(overdueChk.length)notes.push(`${overdueChk[0].person||'相手'}の確認予定時刻を過ぎています。催促文を準備できます。`);
+  const reiki=DB.schedule.find(s=>/REIKI/.test(s.ev)); if(reiki&&mode!=='off')notes.push(`REIKIの作業は ${reiki.t} から60分確保できます。`);
+  if(!notes.length)notes.push('今のところ急ぎはありません。返事待ちはAIが追跡しています。');
+  return notes.slice(0,4);
+}
+
+/* =====================================================================
+   タスク操作（取り消し対応）
+   ===================================================================== */
+function toast(msg,undoFn){
+  const t=$('#toast');
+  t.innerHTML=esc(msg)+(undoFn?` <button class="undo" id="undoBtn">元に戻す</button>`:'');
+  t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),undoFn?5000:2200);
+  if(undoFn){ $('#undoBtn').onclick=()=>{ undoFn(); t.classList.remove('on'); }; }
+}
+function snap(t){ return JSON.parse(JSON.stringify(t)); }
+function restore(prev){ const i=DB.tasks.findIndex(x=>x.id===prev.id); if(i>=0)DB.tasks[i]=prev; else DB.tasks.push(prev); save(); refreshCur(); }
+
+function autoCompleteStep(t){
+  if(!t.project)return; const p=DB.projects.find(x=>x.id===t.project); if(!p)return;
+  const n=s=>normTitle(s);
+  const step=p.steps.find(s=>s.s!=='done'&&(t.title.includes(s.n)||s.n.includes(t.title)||n(t.title).includes(n(s.n))||n(s.n).includes(n(t.title))));
+  if(step){ step.s='done'; const nx=p.steps.find(s=>s.s!=='done'); if(nx&&nx.s==='todo')nx.s='prog'; if(nx)p.current=nx.n; }
+  p.updated=TODAY.toISOString(); recomputeProject(p);
+}
+function nextRepeatDue(t){
+  const d=t.due?new Date(t.due):new Date(TODAY);
+  switch(t.repeat){
+    case 'daily': d.setDate(d.getDate()+1); break;
+    case 'weekdays': do{d.setDate(d.getDate()+1);}while(d.getDay()===0||d.getDay()===6); break;
+    case 'weekly': d.setDate(d.getDate()+7); break;
+    case 'monthly': d.setMonth(d.getMonth()+1); break;
+    case 'monthly25': d.setMonth(d.getMonth()+1,25); break;
+    case 'monthend': d.setMonth(d.getMonth()+2,0); break;
+    case 'yearly': d.setFullYear(d.getFullYear()+1); break;
+    default: return null;
+  }
+  return d.toISOString();
+}
+function completeTask(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return; const before=snap(t);
+  const origNext=t.next;
+  t.status='done'; t.ball='self'; t.next=null; t.prevNext=origNext||null; t.updated=TODAY.toISOString();
+  if(t.project)autoCompleteStep(t);                       // 工程とタスクを正式に連動
+  let extra='',spawnId=null;
+  if(t.repeat&&t.repeat!=='none'){                        // 定期タスクは次回を自動作成
+    const nd=nextRepeatDue(t);
+    if(nd){ spawnId='t'+Date.now()+'_r'; DB.tasks.push(Object.assign({},before,{id:spawnId,status:'now',ball:'self',next:origNext,due:nd,answer:undefined,follows:undefined,updated:TODAY.toISOString()})); extra=` ／ 次回 ${fmtDue(nd)} に再登録`; }
+  }
+  t.spawnedNext=spawnId||null;                            // 「戻す」時に次回分も消せるよう記録
+  save(); skipToday.delete(id);
+  const remaining=activeTasks().filter(x=>x.ball==='self'&&x.status==='now').length;
+  // 取り消すと、定期で自動生成した次回分も一緒に消す（重複ゴースト防止）
+  toast(`完了：${t.title}${extra}（今日あと${remaining}件）`,()=>{ if(spawnId){const i=DB.tasks.findIndex(x=>x.id===spawnId);if(i>=0)DB.tasks.splice(i,1);} restore(before); toast('元に戻しました'); });
+  refreshCur();
+}
+function startTask(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return;
+  t.status='now'; t.ball='self'; t.updated=TODAY.toISOString(); if(t.deferCount)t.deferCount=0; skipToday.delete(id);
+  save(); toast(`「${t.title}」を今やる仕事にしました`); renderHome();
+}
+function setHold(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return; const before=snap(t);
+  t.status='hold'; t.updated=TODAY.toISOString();
+  save(); toast('保留にしました',()=>{restore(before);toast('元に戻しました');}); refreshCur();
+}
+function resumeTask(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return;
+  t.status= (t.ball==='self')?'now':'wait'; t.updated=TODAY.toISOString();
+  save(); toast('再開しました'); refreshCur();
+}
+function markNoNeed(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return; const before=snap(t);
+  t.status='archived'; t.noNeed=true; t.ball='self'; t.updated=TODAY.toISOString();
+  save(); toast('対応不要として整理しました',()=>{restore(before);toast('元に戻しました');}); refreshCur();
+}
+function deleteTask(id){
+  const i=DB.tasks.findIndex(x=>x.id===id); if(i<0)return; const before=snap(DB.tasks[i]);
+  DB.tasks.splice(i,1); save(); closeSheet();
+  toast('削除しました',()=>{restore(before);toast('元に戻しました');}); refreshCur();
+}
+function askNext(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return;
+  openSheet(`<h3>最初の一手を決める</h3><p class="desc">${esc(t.title)} を前に進める、最初の10分の作業を入力してください。</p>
+    <div class="edit-fld"><input id="nextInput" placeholder="例：候補資料を1つ開く"></div>
+    <div class="sheet-acts"><button class="ed" onclick="closeSheet()">やめる</button><button class="ok" onclick="saveNext('${t.id}')">設定する</button></div>`);
+  setTimeout(()=>$('#nextInput')&&$('#nextInput').focus(),200);
+}
+function saveNext(id){
+  const t=DB.tasks.find(x=>x.id===id); const v=$('#nextInput').value.trim();
+  if(!v){toast('内容を入力してください');return;}
+  t.next=v; t.status='now'; t.updated=TODAY.toISOString();
+  save(); closeSheet(); toast('次にやることを設定しました'); renderHome();
+}
+function openDeferReasons(id){
+  const opts=[['time','⏱','時間がない','5〜15分単位へ分割します'],['unknown','❓','内容が分からない','必要情報や確認相手を提示します'],
+    ['big','🧱','作業が大きすぎる','最初の具体的行動を作ります'],['waiting','⏳','誰かを待っている','ボールを相手へ変更します'],
+    ['low','📉','重要ではなくなった','今週以降または保留へ移します'],['heavy','😮‍💨','気が重い','最も簡単な着手だけ提案します'],
+    ['none','✅','対応不要になった','対応不要として終了します']];
+  openSheet(`<h3>この仕事が進まない理由は？</h3><p class="desc">${esc(DB.tasks.find(t=>t.id===id).title)} の進め方をAIが組み直します。</p>
+    ${opts.map(o=>`<button class="opt" onclick="applyDefer('${id}','${o[0]}')"><span class="oi">${o[1]}</span><span class="ob">${o[2]}<div class="od">${o[3]}</div></span></button>`).join('')}`);
+}
+function applyDefer(id,reason){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return; t.deferCount=0; t.updated=TODAY.toISOString(); let msg='';
+  switch(reason){
+    case 'time':case 'big':t.status='now';t.mins=10;t.next=t.next||'最初の10分の作業から始める';msg='10分の作業に分割しました';break;
+    case 'unknown':t.status='now';t.next='不明点を確認する相手を1人決める';msg='まず確認相手を決める形にしました';break;
+    case 'waiting':t.ball='other';t.status='wait';t.nextCheck=dPlus(3);msg='相手ボールに変更し、3日後に確認します';break;
+    case 'low':t.status='hold';msg='保留にしました';break;
+    case 'heavy':t.status='now';t.mins=5;t.next='いちばん簡単な部分だけ5分やる';msg='最も簡単な着手だけ提案しました';break;
+    case 'none':t.status='archived';t.noNeed=true;msg='対応不要として終了しました';break;
+  }
+  save(); closeSheet(); toast(msg); refreshCur();
+}
+
+/* ---------- 編集シート（期限・次回確認を直接編集可能） ---------- */
+function openEdit(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return;
+  const wsOpts=wsOptions(t.ws);
+  const ballOpts=Object.entries(BALL).map(([k,v])=>`<option value="${k}" ${k===t.ball?'selected':''}>${v.label}</option>`).join('');
+  const stOpts=[['now','今やる'],['wait','待っている'],['warn','注意が必要'],['hold','保留'],['done','完了'],['archived','対応不要']]
+    .map(([k,l])=>`<option value="${k}" ${k===t.status?'selected':''}>${l}</option>`).join('');
+  openSheet(`<h3>仕事を編集</h3>
+    <div class="edit-fld"><label>内容</label><input id="e_title" value="${esc(t.title)}"></div>
+    <div class="edit-row2">
+      <div class="edit-fld"><label>所属</label><select id="e_ws">${wsOpts}</select></div>
+      <div class="edit-fld"><label>状態</label><select id="e_status">${stOpts}</select></div>
+    </div>
+    <div class="edit-row2">
+      <div class="edit-fld"><label>いま誰の番か</label><select id="e_ball">${ballOpts}</select></div>
+      <div class="edit-fld"><label>相手</label><input id="e_person" value="${esc(t.person||'')}" placeholder="（なし）"></div>
+    </div>
+    <div class="edit-row2">
+      <div class="edit-fld"><label>期限</label><input type="datetime-local" id="e_due" value="${toLocalInput(t.due)}"></div>
+      <div class="edit-fld"><label>次回確認</label><input type="datetime-local" id="e_check" value="${toLocalInput(t.nextCheck)}"></div>
+    </div>
+    <div class="edit-fld"><label>次にやること</label><input id="e_next" value="${esc(t.next||'')}" placeholder="（なし）"></div>
+    <div class="edit-row2">
+      <div class="edit-fld"><label>所要時間（分）</label><input type="number" id="e_mins" value="${t.mins||''}" placeholder="例：10"></div>
+      <div class="edit-fld"><label>繰り返し</label><select id="e_repeat">${REPEAT_OPTS.map(([k,l])=>`<option value="${k}" ${k===(t.repeat||'none')?'selected':''}>${l}</option>`).join('')}</select></div>
+    </div>
+    <div class="edit-fld"><label>写真</label>${t.photo?`<div><img src="${t.photo}" style="max-height:140px;border-radius:10px;display:block"><button class="ftab" style="margin-top:6px" onclick="removeTaskPhoto('${t.id}')">写真を外す</button></div>`:`<button class="ftab" onclick="attachTaskPhoto('${t.id}')">📷 写真を添付</button>`}</div>
+    <div class="sheet-acts"><button class="ed" onclick="deleteTask('${t.id}')" style="background:var(--red-bg);color:var(--red);border-color:#f3c9c9">削除</button>
+      <button class="ok" onclick="saveEdit('${t.id}')">保存する</button></div>`);
+}
+function saveEdit(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return;
+  t.title=$('#e_title').value.trim()||t.title;
+  t.ws=$('#e_ws').value; t.status=$('#e_status').value; t.ball=$('#e_ball').value;
+  t.person=$('#e_person').value.trim()||null;
+  t.due=fromLocalInput($('#e_due').value); t.nextCheck=fromLocalInput($('#e_check').value);
+  t.next=$('#e_next').value.trim()||null;
+  const mn=parseInt($('#e_mins').value,10); t.mins=isNaN(mn)?null:mn;
+  t.repeat=$('#e_repeat').value;
+  t.updated=TODAY.toISOString();
+  if(t.project){ if(t.status==='done')autoCompleteStep(t); else syncProjectFromTasks(t.project); }
+  save(); closeSheet(); toast('保存しました'); refreshCur();
+}
+
+/* =====================================================================
+   CLAUDE API 連携（本物のAI）
+   キーは localStorage 'pilot_api_key' に単独保存 = バックアップJSONに含まれない
+   オフライン・未設定・エラー時はルール解析へ自動フォールバック
+   ===================================================================== */
+function getApiKey(){ try{ return localStorage.getItem('pilot_api_key')||''; }catch(e){ return ''; } }
+function aiEnabled(){ return !!getApiKey() && navigator.onLine!==false; }
+function aiModel(){ return DB.settings.aiModel||'claude-opus-4-8'; }
+function saveApiKey(){
+  const v=($('#apiKeyInput').value||'').trim();
+  if(!v){ toast('APIキーを入力してください'); return; }
+  try{ localStorage.setItem('pilot_api_key',v); }catch(e){ toast('保存できませんでした'); return; }
+  openSettings(); toast('APIキーを保存しました（この端末のみ・バックアップ対象外）');
+}
+function clearApiKey(){ try{ localStorage.removeItem('pilot_api_key'); }catch(e){} openSettings(); toast('APIキーを削除しました'); }
+
+async function aiCall(body){
+  const key=getApiKey(); if(!key){ const e=new Error('APIキー未設定'); e.code='no-key'; throw e; }
+  const ctrl=new AbortController(); const tm=setTimeout(()=>ctrl.abort(),90000);
+  let res;
+  try{
+    res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',  // ブラウザ直呼びに必須のCORSオプトイン
+        'content-type':'application/json'
+      },
+      body:JSON.stringify(body),
+      signal:ctrl.signal
+    });
+  }catch(e){ clearTimeout(tm); if(e.name==='AbortError'){const x=new Error('タイムアウト');x.code='timeout';throw x;} const x=new Error('通信エラー（オフライン？）');x.code='net';throw x; }
+  clearTimeout(tm);
+  if(!res.ok){
+    let msg='HTTP '+res.status;
+    try{ const j=await res.json(); if(j.error&&j.error.message)msg=j.error.message; }catch(_){}
+    const e=new Error(msg); e.status=res.status; throw e;
+  }
+  return res.json();
+}
+function aiText(resp){ const b=(resp.content||[]).find(x=>x.type==='text'); return b?b.text:''; }
+function aiErrMsg(e){
+  if(e.status===401)return 'APIキーが無効です';
+  if(e.status===429)return '利用上限に到達（少し待って再試行）';
+  if(e.status===529||e.status>=500)return 'Anthropic側が混雑中';
+  if(e.code==='timeout')return 'タイムアウト';
+  if(e.code==='net')return 'オフライン';
+  return (e.message||'エラー').slice(0,60);
+}
+
+/* ---- 構造化出力スキーマ（タスク抽出） ---- */
+const NS={anyOf:[{type:'string'},{type:'null'}]};
+const TASKS_SCHEMA={type:'object',additionalProperties:false,required:['tasks'],properties:{
+  tasks:{type:'array',items:{type:'object',additionalProperties:false,
+    required:['title','ws','person','ball','due','nextCheck','next','mins','prio','repeat'],
+    properties:{
+      title:{type:'string',description:'簡潔なタイトル（日付・「まで」を含めない）'},
+      ws:{type:'string',description:'所属ワークスペース名'},
+      person:NS,
+      ball:{type:'string',enum:['self','other','team','cond','unknown'],description:'誰の番か'},
+      due:NS, nextCheck:NS,
+      next:NS,
+      mins:{anyOf:[{type:'integer'},{type:'null'}]},
+      prio:{type:'integer',enum:[1,2,3,4,5]},
+      repeat:{type:'string',enum:['none','daily','weekdays','weekly','monthly','monthly25','monthend','yearly']}
+    }}}
+}};
+const CHAT_SCHEMA={type:'object',additionalProperties:false,required:['reply','actions'],properties:{
+  reply:{type:'string',description:'ユーザーへの返答。日本語・簡潔・結論から・責めない'},
+  actions:{type:'array',items:{type:'object',additionalProperties:false,
+    required:['type','task_title','date'],
+    properties:{
+      type:{type:'string',enum:['move_due','set_next_check','complete','hold','resume','archive','make_wait']},
+      task_title:{type:'string',description:'対象タスクのタイトル（部分一致で特定）'},
+      date:NS
+    }}}
+}};
+
+function nowLocalStr(){ const d=TODAY; return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`; }
+function aiSystemForParse(){
+  const wsList=wsNames().filter(n=>n!=='未分類');
+  const learned=(DB.learned||[]).map(l=>`${l.person}→${l.ws}`).join('、')||'なし';
+  return `あなたはタスク管理アプリ「PILOT」の解析エンジン。ユーザーの発話を1件以上の仕事に分解する。
+現在日時: ${nowLocalStr()}（${'日月火水木金土'[TODAY.getDay()]}曜日）
+ワークスペース候補: ${wsList.join('、')}。どれにも当てはまらなければ「未分類」。
+学習済みの相手→所属: ${learned}
+ルール:
+- 「Aさんに◯◯を頼んだ/依頼した」→ ball=other（相手の回答待ち）。nextCheckに確認日時。
+- デザイナー・社内・外注・チームへの依頼 → ball=team。入金/納品/到着/入荷待ち → ball=cond。自分の作業 → ball=self。担当が不明 → unknown。
+- 「金曜までに返事がなければ電話」型は2件に分ける：送る作業(self)＋返事の確認(other, nextCheck=その日時, next="返事がなければ電話する")。
+- due/nextCheckは "YYYY-MM-DDTHH:mm" のローカル時刻。時刻の指定がなければ18:00。「午前中」=12:00、「朝」=9:00、「夕方」=17:00、「夜」=19:00。日付が読み取れなければnull。
+- nextは次にやる具体的な一手を短く。minsは推定所要分。prioは1〜5（5=顧客・納期・金銭に関わる）。
+- repeatは「毎日/平日/毎週/毎月/毎月25日/毎月末/毎年」の指定があるときだけ。それ以外はnone。`;
+}
+async function aiParse(raw){
+  const resp=await aiCall({
+    model:aiModel(), max_tokens:3000,
+    system:aiSystemForParse(),
+    messages:[{role:'user',content:raw}],
+    output_config:{format:{type:'json_schema',schema:TASKS_SCHEMA}}
+  });
+  return aiMapTasks(JSON.parse(aiText(resp)), raw);
+}
+function aiMapTasks(data, raw){
+  return (data.tasks||[]).map(t=>{
+    const due=t.due?fromLocalInput(t.due):null;
+    let nextCheck=t.nextCheck?fromLocalInput(t.nextCheck):null;
+    const ws=wsNames().includes(t.ws)?t.ws:'未分類';
+    const ball=BALL[t.ball]?t.ball:'self';
+    if(ball!=='self'&&!nextCheck)nextCheck=due||dPlus(2);
+    const title=(t.title||'').slice(0,40)||(raw||'').slice(0,20);
+    const dup=findDuplicate(title,t.person||null);
+    return {title,ws,person:t.person||null,ball,
+      status:ball==='self'?'now':'wait',
+      due,nextCheck:ball==='self'?(t.nextCheck?fromLocalInput(t.nextCheck):null):nextCheck,
+      next:t.next||null,
+      repeat:REPEAT_OPTS.some(r=>r[0]===t.repeat)?t.repeat:'none',
+      mins:t.mins||null,prio:Math.min(5,Math.max(1,t.prio||3)),
+      conf:{ws:'hi',person:t.person?'hi':'lo',due:due?'hi':'lo',ball:'hi'},
+      dup:dup?dup.title:null};
+  });
+}
+
+/* ---- 秘書会話（回答＋実行アクション） ---- */
+function aiSnapshot(){
+  const tk=activeTasks().map(x=>({t:x.title,ws:x.ws,ball:x.ball,st:x.status,due:x.due?fmtDue(x.due):null,
+    next:x.next||undefined,person:x.person||undefined,check:x.nextCheck?fmtDue(x.nextCheck):undefined,mins:x.mins||undefined}));
+  const pj=DB.projects.map(p=>({name:p.name,state:p.state,pct:p.progress,blocker:p.blocker||undefined}));
+  const sc=(DB.schedule||[]).filter(s=>s.date===dayKey(TODAY)).map(s=>s.t+' '+s.ev);
+  return JSON.stringify({現在:nowLocalStr(),モード:MODES[mode].label,仕事:tk,保留:holdTasks().map(x=>x.title),案件:pj,今日の予定:sc});
+}
+function aiSystemForChat(){
+  return `あなたはタスク管理アプリ「PILOT」のAI秘書。落ち着いた有能な秘書として振る舞う。
+姿勢: 結論を先に・短く・責めない・事実と推測を分ける・選択肢を出しすぎない。
+ユーザーの現在の状況(JSON): ${aiSnapshot()}
+できること: 質問への回答に加えて、actionsで実際にタスクを操作できる。
+- move_due=期限を移す(dateに"YYYY-MM-DDTHH:mm") / set_next_check=次回確認日を設定 / complete=完了 / hold=保留 / resume=再開 / archive=対応不要 / make_wait=相手の返事待ちに変更(dateに確認日)
+- task_titleは状況JSONの仕事の t（タイトル）に部分一致で指定。
+- 操作の指示（「明日に移して」「完了にして」等）があれば必ずactionsを返す。単なる質問ならactionsは空配列。
+- メール送信・電話などアプリ外の行動は実行できない（文面の提案は可）。`;
+}
+function aiChatHistory(){
+  // API要件: messagesはuser始まり。直前にpush済みの今回発話を除外し、先頭がuserになるまで削る
+  let src=(DB.chat||[]).filter(m=>!m.typing);
+  src=src.slice(0,-1).slice(-8);
+  while(src.length&&src[0].r!=='me')src.shift();
+  return src.map(m=>({role:m.r==='me'?'user':'assistant',content:m.t}));
+}
+async function aiChat(userMsg){
+  const hist=aiChatHistory();
+  const resp=await aiCall({
+    model:aiModel(), max_tokens:2000,
+    system:aiSystemForChat(),
+    messages:hist.concat([{role:'user',content:userMsg}]),
+    output_config:{format:{type:'json_schema',schema:CHAT_SCHEMA}}
+  });
+  return JSON.parse(aiText(resp));
+}
+function applyAIActions(actions){
+  const done=[];
+  (actions||[]).forEach(a=>{
+    const q=(a.task_title||'').trim(); if(!q)return;
+    const t=activeTasks().concat(holdTasks()).find(x=>x.title.includes(q)||q.includes(x.title));
+    if(!t){ done.push(`⚠️「${q}」が見つかりませんでした`); return; }
+    const d=a.date?fromLocalInput(a.date):null;
+    switch(a.type){
+      case 'move_due': if(d){t.due=d;t.updated=TODAY.toISOString();done.push(`✓「${t.title}」の期限を${fmtDue(d)}へ`);} break;
+      case 'set_next_check': if(d){t.nextCheck=d;t.updated=TODAY.toISOString();done.push(`✓「${t.title}」の次回確認を${fmtDue(d)}へ`);} break;
+      case 'complete': completeTask(t.id); done.push(`✓「${t.title}」を完了`); break;
+      case 'hold': t.status='hold'; t.updated=TODAY.toISOString(); done.push(`✓「${t.title}」を保留`); break;
+      case 'resume': t.status=t.ball==='self'?'now':'wait'; t.updated=TODAY.toISOString(); done.push(`✓「${t.title}」を再開`); break;
+      case 'archive': t.status='archived'; t.noNeed=true; t.updated=TODAY.toISOString(); done.push(`✓「${t.title}」を対応不要に`); break;
+      case 'make_wait': t.ball='other'; t.status='wait'; t.nextCheck=d||dPlus(3); t.updated=TODAY.toISOString(); done.push(`✓「${t.title}」を返事待ちに（${fmtDue(t.nextCheck)}確認）`); break;
+    }
+  });
+  if(done.length){ save(); }
+  return done;
+}
+async function testAI(){
+  toast('接続テスト中…');
+  try{
+    const r=await aiCall({model:aiModel(),max_tokens:32,messages:[{role:'user',content:'「接続OK」とだけ返答して'}]});
+    toast(`✅ 接続OK（${r.model||aiModel()}）`);
+  }catch(e){ toast('❌ '+aiErrMsg(e)); }
+}
+function setDepBusy(b){
+  const btn=document.querySelector('#v-deposit .big-btn'); if(!btn)return;
+  btn.disabled=b; btn.style.opacity=b?'.65':'1';
+  btn.textContent=b?'🤖 Claudeが整理中…':'🤖 AIに整理してもらう';
+}
+
+/* =====================================================================
+   DEPOSIT — voice + 強化パーサー
+   ===================================================================== */
+let recog=null,recTarget=null;
+function getRecog(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR)return null;
+  const r=new SR(); r.lang='ja-JP'; r.interimResults=true; r.continuous=true; return r; }
+function toggleMic(){
+  const circle=$('#micCircle'),cap=$('#micCap');
+  if(recog&&recTarget==='dep'){recog.stop();return;}
+  recog=getRecog(); if(!recog){toast('この端末は音声入力に未対応です。文字で入力してください');$('#depText').focus();return;}
+  recTarget='dep'; let base=$('#depText').value;
+  circle.classList.add('rec'); cap.textContent='聞いています…（もう一度タップで停止）';
+  recog.onresult=e=>{let txt='';for(let i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;$('#depText').value=(base?base+' ':'')+txt;};
+  recog.onerror=()=>{};
+  recog.onend=()=>{circle.classList.remove('rec');cap.textContent='タップして話す';recog=null;if($('#depText').value.trim())toast('整理するには下のボタンを押してください');};
+  recog.start();
+}
+function quickEgs(){
+  const egs=['佐藤さんにアトマイザーの見積を頼んだ。金曜までに返事がなければ午後に電話する',
+    '来週火曜日の午前中までに田中商事の佐藤さんへ見積を送る','7月10日までにREIKIのPVを完成させる',
+    '三日後に妻へ学校の書類を渡す','明日田中さんに見積を送って、金曜までに返事がなければ電話。それとPVのロゴをデザイナーに頼む'];
+  const i=Math.floor((Date.now()/1500)%egs.length); $('#depText').value=egs[i]; $('#depText').focus();
+}
+
+/* ---- 日本語日付・時刻パーサー（強化版） ---- */
+const WEEK={'日':0,'月':1,'火':2,'水':3,'木':4,'金':5,'土':6};
+const KN={'零':0,'〇':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+function jnum(s){ if(s==null)return null; if(/^\d+$/.test(s))return +s; if(s in KN)return KN[s];
+  let m=s.match(/^(.)?十(.)?$/); if(m){let t=(m[1]?(KN[m[1]]||0):1)*10; if(m[2])t+=(KN[m[2]]||0); return t;} return null; }
+function endOfMonth(k){ const d=new Date(TODAY); d.setMonth(d.getMonth()+k+1,0); d.setHours(0,0,0,0); return d; }
+function nextWeekday(w,prefix){
+  const d=new Date(TODAY),cur=d.getDay();
+  if(!prefix){ let diff=(w-cur+7)%7; if(diff===0)diff=7; return addD(diff); }
+  let toNextMon=((8-cur)%7)||7;           // 次週の月曜まで
+  let mon = prefix==='今週'? addD(-(((cur+6)%7))) : prefix==='再来週'? addD(toNextMon+7) : addD(toNextMon);
+  const offMon=(w+6)%7;                    // 月曜起点のオフセット
+  const r=new Date(mon); r.setDate(r.getDate()+offMon); r.setHours(0,0,0,0); return r;
+}
+function detectDue(s){
+  let hour=null,min=0,explicitTime=false;
+  const pm=/午後|夕方|夜(?!間|中)|ＰＭ|PM/i.test(s);
+  let tm=s.match(/(\d{1,2}|[一二三四五六七八九十]+)\s*時\s*(半|(\d{1,2})\s*分)?/);
+  if(tm){ hour=jnum(tm[1]); if(tm[2]==='半')min=30; else if(tm[3])min=+tm[3]; explicitTime=true; }
+  else { let cm=s.match(/(\d{1,2}):(\d{2})/); if(cm){hour=+cm[1];min=+cm[2];explicitTime=true;} }
+  if(explicitTime){ if(pm&&hour<12)hour+=12; else if(!/午前|朝|ＡＭ|AM/i.test(s)&&hour>=1&&hour<=7)hour+=12; }
+  else { if(/午前中/.test(s))hour=12; else if(/朝/.test(s))hour=9; else if(/午前/.test(s))hour=10;
+    else if(/昼/.test(s))hour=12; else if(/夕方/.test(s))hour=17; else if(/午後/.test(s))hour=15;
+    else if(/夜中|深夜/.test(s))hour=23; else if(/夜|今晩|今夜/.test(s))hour=19; }
+
+  let day=null;
+  if(/なるべく早く|なる早|至急|今すぐ|すぐに|早急/.test(s)){ day=addD(0); if(hour==null){hour=Math.min(22,TODAY.getHours()+2);} }
+  if(!day){ let am=s.match(/(\d{1,2}|[一二三四五六七八九十]+)\s*月\s*(\d{1,2}|[一二三四五六七八九十]+)\s*日/);
+    if(am){ const mo=jnum(am[1])-1,dd=jnum(am[2]),y=TODAY.getFullYear(); let c=new Date(y,mo,dd,0,0,0,0);
+      if(c<startOfDay(TODAY))c=new Date(y+1,mo,dd); day=c; } }
+  if(!day){ if(/再来月末/.test(s))day=endOfMonth(2); else if(/来月末/.test(s))day=endOfMonth(1);
+    else if(/今月末|月末/.test(s))day=endOfMonth(0);
+    else if(/来月/.test(s)){const d=new Date(TODAY);d.setMonth(d.getMonth()+1,1);d.setHours(0,0,0,0);day=d;} }
+  if(!day){ let rm=s.match(/(\d+|[一二三四五六七八九十]+)\s*(日|週間|週|か月|ヶ月|カ月|ヵ月)\s*後/);
+    if(rm){ const n=jnum(rm[1]),d=new Date(TODAY); if(/日/.test(rm[2]))d.setDate(d.getDate()+n);
+      else if(/週/.test(rm[2]))d.setDate(d.getDate()+n*7); else d.setMonth(d.getMonth()+n); d.setHours(0,0,0,0); day=d; } }
+  if(!day){ if(/明々後日/.test(s))day=addD(3); else if(/明後日|あさって/.test(s))day=addD(2);
+    else if(/明日|あした/.test(s))day=addD(1); else if(/今日|本日|今晩|今夜/.test(s))day=addD(0); }
+  if(!day){ let wm=s.match(/(再来週|来週|今週)?\s*([日月火水木金土])曜/); if(wm)day=nextWeekday(WEEK[wm[2]],wm[1]); }
+  if(!day&&hour!=null)day=addD(0);
+  if(!day)return null;
+  const out=new Date(day); out.setHours(hour!=null?hour:18, hour!=null?min:0, 0,0); return out.toISOString();
+}
+function parseFollowup(s){ const m=s.match(FUP); if(!m)return null; return detectDue(s.slice(m.index))||detectDue(s); }
+
+function detectWS(s){
+  const has=n=>wsNames().includes(n);
+  // 1) 利用者が作ったワークスペース名そのものが含まれる（自由作成に対応）
+  for(const n of wsNames()){ if(n!=='未分類'&&n.length>=2&&new RegExp(escReg(n),'i').test(s))return n; }
+  // 2) サンプル用キーワード（該当ワークスペースが存在する場合のみ／プライベートを先に判定）
+  if(has('プライベート')&&/家族|妻|夫|子供|子ども|娘|息子|学校|旅行|帰省|私用|休み|誕生日|病院|歯医者|参観/.test(s))return 'プライベート';
+  if(has('三高産業')&&/三高|在庫|配送|商品課|倉庫|棚卸|発注/.test(s))return '三高産業';
+  if(has('REIKI')&&/REIKI|レイキ|香水|アトマイザー|PV|動画|AXIVE|Kiki/i.test(s))return 'REIKI';
+  if(has('OLIVE')&&/OLIVE|オリーブ|予約|キャンペーン|ホームページ|HP/i.test(s))return 'OLIVE';
+  return '未分類';
+}
+const DATE_RE=/(再来週|来週|今週|今日|本日|明日|あした|明後日|あさって|明々後日|来月末|今月末|月末|来月|なるべく早く|なる早|至急|早急|今すぐ)|(\d{1,2}|[一二三四五六七八九十]+)\s*月\s*(\d{1,2}|[一二三四五六七八九十]+)\s*日|(\d+|[一二三四五六七八九十]+)\s*(日|週間|週|か月|ヶ月|カ月|ヵ月)\s*後|[日月火水木金土]曜日?|(\d{1,2}|[一二三四五六七八九十]+)\s*時(半|(\s*\d{1,2}\s*分))?|頃|まで(に)?|午前中|午前|午後|夕方|夜中|深夜|今晩|今夜|夜|朝|昼/g;
+function stripDates(s){ return s.replace(DATE_RE,''); }
+const LEAD=/^(今日|本日|明日|明後日|明々後日|来週|今週中?|再来週|来月|[日月火水木金土]曜日?|あした|あさって|なるべく|至急)/g;
+function stripLead(n){ let p=n; for(let i=0;i<3;i++){const q=p.replace(LEAD,'').replace(/^(に|へ|の|は|を|が|と|、|。|\s)+/,'');if(q===p)break;p=q;} return p; }
+function detectPerson(s){
+  const c=stripDates(s);
+  let m=c.match(/([一-龥ァ-ヶA-Za-z]{2,8}(?:商事|産業|会社|店|社))の?([一-龥ぁ-んァ-ヶ]{1,6})(さん|社長|部長|課長|専務|様)/);
+  if(m)return m[1]+' '+m[2]+m[3];
+  m=c.match(/([一-龥ぁ-んァ-ヶー]{1,6}?)(さん|社長|部長|課長|専務|様|くん|君)/);
+  if(m){const nm=stripLead(m[1]);return (nm||m[1])+m[2];}
+  m=c.match(/(デザイナー|担当者|先方|取引先|お客様|顧客|主催者)/); if(m)return m[1];
+  m=c.match(/([一-龥ァ-ヶA-Za-z]{2,8}(商事|産業|会社|店))/); if(m)return m[1];
+  return null;
+}
+function detectBall(s){
+  if(/デザイナー|外注|社内|上司|チーム|担当者(が|に|へ)/.test(s)&&/頼|依頼|お願い|提出|作っ?てもらう/.test(s))return 'team';
+  if(/頼ん|頼む|頼み|依頼|お願い|任せ|返事(を)?待|回答(を)?待|提出してもらう|送ってもらう|もらう/.test(s))return 'other';
+  if(/入金|到着|届いたら|入荷|納品されたら|確定したら|入荷したら/.test(s))return 'cond';
+  return 'self';
+}
+function detectNext(s,ball){
+  if(ball==='other'||ball==='team'){
+    if(/見積/.test(s))return '見積の回答を確認する';
+    if(/在庫/.test(s))return '在庫回答を確認する';
+    if(/ロゴ|データ|素材/.test(s))return '提出物を受け取り反映する';
+    return '回答を確認する';
+  }
+  if(/電話/.test(s))return '電話で連絡する';
+  if(/送|渡す/.test(s))return '書類を送付・お渡しする';
+  if(/返信|LINE|連絡|メール/.test(s))return 'メッセージを送る';
+  if(/確認|チェック/.test(s))return '内容を確認する';
+  if(/選ぶ|選定/.test(s))return '候補から選ぶ';
+  if(/作|まとめ|準備|完成|直す|修正/.test(s))return '作成・準備を進める';
+  return null;
+}
+function cleanTitle(s){
+  let t=s.split('。')[0].trim();
+  const fm=t.match(FUP); if(fm)t=t.slice(0,fm.index);
+  t=t.replace(DATE_RE,'');
+  t=t.replace(/(毎日|毎週|毎月末?|毎年|平日)/g,'');                 // 繰り返し語は別管理なのでタイトルから除去
+  t=t.replace(/^(それと|あと|また|そして)[、\s]*/,'');
+  t=t.replace(/^[のにへをがはと、。・\s]+/,'').replace(/[、。・\s]+$/,'').trim(); // 日付除去後に残る助詞を掃除
+  if(t.length>26)t=t.slice(0,26)+'…';
+  return t||s.split('。')[0].slice(0,20);
+}
+const FUP=/(返事|回答|連絡)が?(なければ|来なければ|無ければ|こなければ)/;
+function hasAction(p){ return /送|提出|渡|作|書|まとめ|準備|頼|依頼|お願|確認|チェック|返信|連絡|電話|LINE|メール|選|手配|予約|訪問|回答|直す|修正|片付|買|発注|完成/.test(p); }
+function splitTasks(s){
+  let parts=s.split(/。/).map(x=>x.trim()).filter(Boolean);
+  const merged=[];
+  parts.forEach(p=>{ const attach=FUP.test(p)||!hasAction(p); if(attach&&merged.length)merged[merged.length-1]+='。'+p; else merged.push(p); });
+  const out=[];
+  merged.forEach(p=>{ p.split(/、?それと、?|、?また、?|、?あわせて、?|、?あと、?(?=[一-龥ぁ-ん])/).map(x=>x.trim()).filter(Boolean).forEach(x=>out.push(x)); });
+  return out.filter(p=>p.length>=3);
+}
+function expand(chunk,full,solo){
+  const ball=detectBall(chunk);
+  if(ball==='self'&&FUP.test(chunk)){
+    const pieces=chunk.split(/、/).map(x=>x.trim()).filter(Boolean);
+    let fi=pieces.findIndex(p=>FUP.test(p)); if(fi<=0)fi=Math.max(1,pieces.length-1);
+    const actionPart=pieces.slice(0,fi).join('、')||pieces[0]; const checkPart=pieces.slice(fi).join('、');
+    const a=analyzeOne(actionPart,full,solo);
+    const checkDue=detectDue(checkPart)||detectDue(full);
+    const b={title:(a.person?a.person+'の':'')+'返事を確認する',ws:a.ws,person:a.person,ball:'other',status:'wait',
+      due:null,nextCheck:checkDue||dPlus(2),next:'返事がなければ電話する',mins:5,prio:Math.max(a.prio,3),
+      conf:{ws:a.conf.ws,person:a.person?'hi':'lo',due:checkDue?'hi':'lo',ball:'hi'}};
+    return [a,b];
+  }
+  return [analyzeOne(chunk,full,solo)];
+}
+function learnedWS(person){ if(!person)return null; const e=(DB.learned||[]).find(l=>person.includes(l.person)||l.person.includes(person)); return e?e.ws:null; }
+function detectRepeat(s){
+  if(/平日(毎日|だけ|のみ|の朝)?/.test(s))return 'weekdays';
+  if(/毎日/.test(s))return 'daily';
+  if(/毎月25日|毎月二十五日/.test(s))return 'monthly25';
+  if(/毎月末|月末ごと|毎月\s*末/.test(s))return 'monthend';
+  if(/毎週/.test(s))return 'weekly';
+  if(/毎月/.test(s))return 'monthly';
+  if(/毎年/.test(s))return 'yearly';
+  return 'none';
+}
+function normTitle(s){ return (s||'').replace(/[\s、。・をのにへはがと「」『』]/g,''); }
+function gram3(s){ const a=[]; for(let i=0;i<=s.length-3;i++)a.push(s.slice(i,i+3)); return a.length?a:[s]; }
+function findDuplicate(title,person){
+  const nt=normTitle(title); if(nt.length<3)return null;
+  return DB.tasks.find(t=>{
+    if(TERMINAL.includes(t.status)||!t.title)return false;
+    const ot=normTitle(t.title); if(!ot)return false;
+    if(ot===nt)return true;
+    // 一方が他方を内包（「○○社へ在庫回答」と「○○社へ在庫回答する」など）
+    const sh=nt.length<=ot.length?nt:ot, lo=nt.length<=ot.length?ot:nt;
+    if(sh.length>=5&&lo.includes(sh))return true;
+    if(person&&t.person&&(t.person.includes(person)||person.includes(t.person))&&gram3(nt).some(g=>ot.includes(g)))return true;
+    return false;
+  });
+}
+function analyzeOne(chunk,full,solo){
+  let ws=detectWS(chunk); if(ws==='未分類'&&solo)ws=detectWS(full);
+  const person=detectPerson(chunk)||(solo?detectPerson(full):null);
+  let wsConf=detectWS(chunk)!=='未分類'?'hi':(ws!=='未分類'?'mid':'lo');
+  // 学習の反映：キーワードで決まらないとき、相手→所属の記憶を使う（使うほど精度が上がる）
+  if(ws==='未分類'){ const lws=learnedWS(person); if(lws){ ws=lws; wsConf='hi'; } }
+  const ball=detectBall(chunk); const due=detectDue(chunk); const next=detectNext(chunk,ball);
+  const nextCheck=(ball==='other'||ball==='team'||ball==='cond')?(parseFollowup(chunk)||due||dPlus(2)):null;
+  const title=cleanTitle(chunk);
+  const dup=findDuplicate(title,person);
+  const conf={ws:wsConf,person:person?'hi':'lo',due:due?'hi':'lo',ball:'hi'};
+  return {title,ws,person,ball,status:ball==='self'?'now':'wait',due,nextCheck,next,repeat:detectRepeat(chunk),
+    mins:estMins(chunk),prio:estPrio(chunk,due),conf,dup:dup?dup.title:null};
+}
+function estMins(s){ if(/電話|返信|LINE|連絡|確認|渡/.test(s))return 5; if(/見積|資料|まとめ|作成|書類/.test(s))return 15; if(/編集|制作|PV|動画|完成/.test(s))return 60; return 10; }
+function estPrio(s,due){ let p=3; if(/配送|入金|納品|至急|急ぎ|なるべく早く|顧客|お客/.test(s))p=5; else if(isOverdue(due))p=4; else if(/家族|私用/.test(s))p=2; return p; }
+
+let pendingParse=[];
+function ruleParse(raw){
+  const chunks=splitTasks(raw); const solo=chunks.length===1;
+  let tasks=[]; chunks.forEach(c=>{tasks=tasks.concat(expand(c,raw,solo));});
+  return tasks;
+}
+async function submitDeposit(){
+  const raw=$('#depText').value.trim();
+  if(!raw){toast('内容を話すか入力してください');$('#depText').focus();return;}
+  if(aiEnabled()){
+    setDepBusy(true);
+    try{
+      pendingParse=await aiParse(raw);
+      setDepBusy(false);
+      if(pendingParse.length){ showParseSheet(raw,true); return; }
+      toast('Claudeが仕事を見つけられませんでした。ルール解析で続行します');
+    }catch(e){
+      setDepBusy(false);
+      toast('Claude接続に失敗（'+aiErrMsg(e)+'）→ ルール解析で続行');
+    }
+  }
+  pendingParse=ruleParse(raw);
+  showParseSheet(raw,false);
+}
+function showParseSheet(raw,byAI){
+  const multi=pendingParse.length>1;
+  openSheet(`<h3>${byAI?'🤖 Claudeが整理しました':'🤖 AIが整理しました'+(getApiKey()?'（ルール解析）':'')}</h3>
+    <p class="desc">「${esc(raw.length>54?raw.slice(0,54)+'…':raw)}」</p>
+    ${multi?`<div class="multi-note">📋 ${pendingParse.length}件の仕事として登録します</div>`:''}
+    ${pendingParse.map((p,i)=>parseCard(p,i)).join('')}
+    <div class="sheet-acts"><button class="ed" onclick="closeSheet()">やめる</button>
+      <button class="ok" onclick="confirmDeposit()">${multi?'まとめて登録':'登録する'}</button></div>
+    <p class="desc" style="text-align:center;margin-top:10px">期限・次回確認も含め、違う項目だけ直して登録できます。</p>`);
+}
+function parseCard(p,i){
+  const wsOpts=wsOptions(p.ws);
+  const ballOpts=Object.entries(BALL).map(([k,v])=>`<option value="${k}" ${k===p.ball?'selected':''}>${v.label}</option>`).join('');
+  const confTag=c=>`<span class="conf ${c}">${c==='hi'?'確信◎':c==='mid'?'要確認':'推測'}</span>`;
+  const repOpts=REPEAT_OPTS.map(([k,l])=>`<option value="${k}" ${k===(p.repeat||'none')?'selected':''}>${l}</option>`).join('');
+  return `<div class="pr" data-i="${i}">
+    ${pendingParse.length>1?`<div class="fld"><span class="fk">${i+1}件目</span><span class="fv">${esc(p.title)}</span></div>`:''}
+    ${p.dup?`<div class="fld" style="background:var(--amber-bg);border-radius:9px"><span class="fk" style="color:var(--amber)">⚠️重複</span><span class="fv" style="color:var(--amber);font-size:13px">「${esc(p.dup)}」に似ています。重複なら下の「やめる」で中止できます</span></div>`:''}
+    <div class="fld"><span class="fk">内容</span><span class="fv"><input data-f="title" value="${esc(p.title)}"></span></div>
+    <div class="fld"><span class="fk">所属</span><span class="fv"><select data-f="ws">${wsOpts}</select></span>${confTag(p.conf.ws)}</div>
+    <div class="fld"><span class="fk">相手</span><span class="fv"><input data-f="person" value="${esc(p.person||'')}" placeholder="（なし）"></span>${confTag(p.conf.person)}</div>
+    <div class="fld"><span class="fk">誰の番</span><span class="fv"><select data-f="ball">${ballOpts}</select></span></div>
+    <div class="fld"><span class="fk">期限</span><span class="fv"><input type="datetime-local" data-f="due" value="${toLocalInput(p.due)}"></span>${confTag(p.conf.due)}</div>
+    <div class="fld"><span class="fk">次回確認</span><span class="fv"><input type="datetime-local" data-f="nextCheck" value="${toLocalInput(p.nextCheck)}"></span></div>
+    <div class="fld"><span class="fk">次にやること</span><span class="fv"><input data-f="next" value="${esc(p.next||'')}" placeholder="（AIが提案）"></span></div>
+    <div class="fld"><span class="fk">繰り返し</span><span class="fv"><select data-f="repeat">${repOpts}</select></span></div>
+  </div>`;
+}
+const REPEAT_OPTS=[['none','なし（1回）'],['daily','毎日'],['weekdays','平日'],['weekly','毎週'],['monthly','毎月'],['monthly25','毎月25日'],['monthend','毎月末'],['yearly','毎年']];
+function confirmDeposit(){
+  document.querySelectorAll('#sheet .pr').forEach(card=>{
+    const i=+card.dataset.i,p=pendingParse[i];
+    card.querySelectorAll('[data-f]').forEach(el=>{
+      const f=el.dataset.f,v=el.value;
+      if(f==='person')p.person=v.trim()||null;
+      else if(f==='next')p.next=v.trim()||null;
+      else if(f==='due'||f==='nextCheck')p[f]=fromLocalInput(v);
+      else if(f==='repeat')p.repeat=v;
+      else p[f]=v.trim();
+    });
+    p.status=p.ball==='self'?'now':'wait';
+    const id='t'+Date.now()+'_'+i;
+    DB.tasks.push({id,ws:p.ws,title:p.title,status:p.status,ball:p.ball,person:p.person,next:p.next,
+      due:p.due,nextCheck:p.nextCheck,mins:p.mins,prio:p.prio,repeat:p.repeat||'none',answer:p.ball!=='self'?'none':undefined,
+      photo:(i===0?pendingPhoto:null)||undefined,
+      updated:TODAY.toISOString(),follows:p.person?[`${fday(0)} 登録`]:undefined});
+    learnFrom(p);
+  });
+  pendingPhoto=null; $('#depPhoto').innerHTML='';
+  save(); closeSheet(); $('#depText').value='';
+  toast(`${pendingParse.length}件を登録しました。AIが追跡します`); go('home');
+}
+function learnFrom(p){
+  // 簡易学習：相手→所属の対応を記憶（確認・修正可）
+  if(p.person&&p.ws!=='未分類'){
+    const key=p.person; const ex=DB.learned.find(l=>l.person===key);
+    if(ex){ ex.ws=p.ws; ex.count=(ex.count||1)+1; } else DB.learned.push({person:key,ws:p.ws,count:1});
+  }
+}
+
+/* =====================================================================
+   FOLLOW
+   ===================================================================== */
+/* タブは3つに集約：時間軸と相手軸の混在をやめ、初見でも迷わない構成に */
+const FTABS=[{k:'today',l:'今日やる確認'},{k:'waiting',l:'待っている相手'},{k:'all',l:'すべて'}];
+function setFollowTab(k){ followTab=FTABS.some(t=>t.k===k)?k:'today'; renderFollow(); }
+function renderFollow(){
+  syncToday();
+  const fa=DB.tasks.filter(t=>!TERMINAL.includes(t.status)&&(t.ball==='other'||t.ball==='team'||t.ball==='cond'||t.ball==='unknown'||(t.ball==='self'&&t.person)));
+  const isTodayCheck=t=>isOverdue(t.nextCheck||t.due)||(t.nextCheck&&fmtDue(t.nextCheck).startsWith('今日'));
+  const cnt=k=>{
+    if(k==='today')return fa.filter(isTodayCheck).length;
+    if(k==='waiting')return fa.filter(t=>t.ball!=='self').length;
+    return fa.length;
+  };
+  $('#ftabs').innerHTML=FTABS.map(t=>{const c=cnt(t.k);return `<button class="ftab ${followTab===t.k?'on':''}" onclick="setFollowTab('${t.k}')">${t.l}${c?`<span class="b">${c}</span>`:''}</button>`;}).join('');
+  let list;
+  if(followTab==='today')list=fa.filter(isTodayCheck);
+  else if(followTab==='waiting')list=fa.filter(t=>t.ball!=='self');
+  else list=fa;
+  const body=$('#followBody');
+  if(!list.length){body.innerHTML=`<div class="empty">このカテゴリーの仕事はありません ✨</div>`;return;}
+  const groups={}; list.forEach(t=>{const key=t.person||t.condText||'相手未設定';(groups[key]=groups[key]||[]).push(t);});
+  body.innerHTML=Object.entries(groups).map(([p,items])=>personGroup(p,items)).join('');
+}
+function personGroup(person,items){
+  const ini=person.replace(/(さん|社長|部長|課長|専務|様|くん|君|デザイナー|担当者)/g,'').replace(/\s+/g,'').slice(-2)||'？';
+  const ws=items[0].ws; const overdue=items.some(t=>isOverdue(t.nextCheck||t.due));
+  let qs=[]; items.forEach(t=>{ if(t.answer==='partial'){(t.ansNG||[]).forEach(q=>qs.push({q,ok:false}));(t.ansOK||[]).forEach(q=>qs.push({q,ok:true}));} else qs.push({q:t.title,ok:false}); });
+  const hist=items.flatMap(t=>t.follows||[]);
+  const ids=items.map(i=>i.id);
+  return `<div class="pgroup">
+    <div class="ph"><div class="av">${esc(ini)}</div>
+      <div style="flex:1"><div class="pn">${esc(person)} ${overdue?'<span class="over">確認超過</span>':''}</div>
+      <div class="pmeta">${esc(ws)} ／ ${ballBadge(items[0].ball)} ／ 次回確認 ${items[0].nextCheck?fmtDue(items[0].nextCheck):'未設定'}</div></div></div>
+    <ul>${qs.map(x=>`<li class="${x.ok?'answered':''}"><span class="qs">${esc(x.q)}</span><span class="qtag ${x.ok?'ok':'no'}">${x.ok?'回答済':'未回答'}</span></li>`).join('')}</ul>
+    <div class="pacts">
+      <button class="p1" onclick='makeFollowMsg(${JSON.stringify(person)},${JSON.stringify(ids)})'>📝 確認文を作る</button>
+      <button class="p2" onclick='groupReply(${JSON.stringify(person)},${JSON.stringify(ids)})'>✅ 回答が来た</button>
+    </div>
+    ${hist.length?`<details class="phist"><summary>やり取りの履歴（${hist.length}件）</summary>${hist.map(h=>`<div class="hl">・${esc(h)}</div>`).join('')}</details>`:''}
+  </div>`;
+}
+function makeFollowMsg(person,ids){
+  const items=DB.tasks.filter(t=>ids.includes(t.id)); let qs=[];
+  items.forEach(t=>{ if(t.answer==='partial')(t.ansNG||[]).forEach(q=>qs.push(q)); else qs.push(t.title); });
+  const msg=`お世話になっております。先日お願いした件について、下記ご確認させてください。\n\n`+qs.map((q,i)=>`${i+1}. ${q}`).join('\n')+`\n\nお手すきの際にご返信いただけますと幸いです。よろしくお願いいたします。`;
+  openSheet(`<h3>${esc(person)}への確認文</h3><p class="desc">AIが作成しました。送信は行いません。コピーしてご利用ください。</p>
+    <div class="edit-fld"><textarea id="fmsg" style="min-height:170px">${esc(msg)}</textarea></div>
+    <div class="sheet-acts"><button class="ed" onclick="closeSheet()">閉じる</button><button class="ok" onclick="copyMsg()">📋 コピー</button></div>
+    <p class="desc" style="text-align:center;margin-top:8px">⚠️ 自動送信はしません（高影響の実行は本人が承認）</p>`);
+}
+function copyMsg(){ const v=$('#fmsg').value; if(navigator.clipboard)navigator.clipboard.writeText(v); toast('確認文をコピーしました'); closeSheet(); }
+function groupReply(person,ids){
+  if(ids.length===1){ gotReply(ids[0]); return; }
+  openSheet(`<h3>${esc(person)}から回答が来た</h3><p class="desc">回答が来た件にチェックして、まとめて処理できます。1件だけなら一部回答にも対応します。</p>
+    ${ids.map(id=>{const t=DB.tasks.find(x=>x.id===id);return `<button class="opt" data-id="${id}" onclick="this.classList.toggle('sel')"><span class="chkbox">✓</span><span class="ob">${esc(t.title)}<div class="od">${ballBadge(t.ball)}${t.answer==='partial'?' ・一部回答中':''}</div></span></button>`;}).join('')}
+    <div class="sheet-acts"><button class="ed" onclick="closeSheet()">やめる</button><button class="ok" onclick="bulkReply()">選択した件を回答済みに</button></div>
+    <p class="desc" style="text-align:center;margin-top:8px">1件だけ選んで「一部回答」にしたい場合は、件名をタップせず下の各行から個別に開けます。</p>
+    <div style="margin-top:6px">${ids.map(id=>{const t=DB.tasks.find(x=>x.id===id);return `<button class="ftab" style="margin:0 6px 6px 0" onclick="gotReply('${id}')">「${esc(t.title.slice(0,10))}」を個別に</button>`;}).join('')}</div>`);
+}
+function bulkReply(){
+  const ids=[...document.querySelectorAll('#sheet .opt.sel')].map(b=>b.dataset.id);
+  if(!ids.length){ toast('回答が来た件を選んでください'); return; }
+  ids.forEach(id=>{ const t=DB.tasks.find(x=>x.id===id); if(!t)return; t.updated=TODAY.toISOString();
+    (t.follows=t.follows||[]).push(`${fday(0)} 回答受領（全部）`); t.answer='answered';
+    if(t.next){ t.ball='self'; t.status='now'; } else t.status='done'; });
+  save(); closeSheet(); toast(`${ids.length}件を回答済みにしました（自分の番に戻しました）`); refreshCur();
+}
+function gotReply(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return;
+  openSheet(`<h3>回答が来ました</h3><p class="desc">${esc(t.person||'相手')}：${esc(t.title)}</p>
+    <button class="opt" onclick="resolveReply('${id}','full')"><span class="oi">✅</span><span class="ob">すべて回答が来た<div class="od">${t.next?'次にやること「'+esc(t.next)+'」を自分の番に戻します':'仕事を再開します'}</div></span></button>
+    ${t.answer==='partial'?`<button class="opt" onclick="partialPick('${id}')"><span class="oi">◐</span><span class="ob">一部が回答された<div class="od">回答済みの項目をチェックして更新</div></span></button>`:
+      `<button class="opt" onclick="resolveReply('${id}','partial')"><span class="oi">◐</span><span class="ob">一部だけ回答が来た<div class="od">回答済みと未回答を分けて待ち継続</div></span></button>`}
+    <button class="opt" onclick="resolveReply('${id}','none')"><span class="oi">🚫</span><span class="ob">回答不要になった<div class="od">対応不要として終了</div></span></button>`);
+}
+function partialPick(id){
+  const t=DB.tasks.find(x=>x.id===id); const ng=t.ansNG||[t.title];
+  openSheet(`<h3>回答された項目を選ぶ</h3><p class="desc">${esc(t.person||'相手')}が回答した項目にチェックしてください。</p>
+    ${ng.map((q,i)=>`<button class="opt" data-q="${i}" onclick="this.classList.toggle('sel')"><span class="chkbox">✓</span><span class="ob">${esc(q)}</span></button>`).join('')}
+    <div class="sheet-acts"><button class="ed" onclick="closeSheet()">やめる</button><button class="ok" onclick="applyPartial('${id}')">更新する</button></div>`);
+}
+function applyPartial(id){
+  const t=DB.tasks.find(x=>x.id===id); const ng=t.ansNG||[]; const done=[];
+  document.querySelectorAll('#sheet .opt.sel').forEach(b=>done.push(+b.dataset.q));
+  const newOK=t.ansOK?[...t.ansOK]:[]; const newNG=[];
+  ng.forEach((q,i)=>{ if(done.includes(i))newOK.push(q); else newNG.push(q); });
+  t.ansOK=newOK; t.ansNG=newNG; t.updated=TODAY.toISOString();
+  (t.follows=t.follows||[]).push(`${fday(0)} 一部回答（${done.length}件）`);
+  if(newNG.length===0){ t.answer='answered'; if(t.next){t.ball='self';t.status='now';toast('全件回答。あなたの番に戻しました');}else{t.status='done';toast('完了にしました');} }
+  else { t.answer='partial'; toast(`${done.length}件を回答済みにしました`); }
+  save(); closeSheet(); refreshCur();
+}
+function resolveReply(id,kind){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return; t.updated=TODAY.toISOString();
+  (t.follows=t.follows||[]).push(`${fday(0)} 回答受領（${kind==='full'?'全部':kind==='partial'?'一部':'不要'}）`);
+  if(kind==='full'){ t.answer='answered'; if(t.next){t.ball='self';t.status='now';toast('回答を受け、あなたの番に戻しました');}else{t.status='done';toast('完了にしました');} }
+  else if(kind==='partial'){ t.answer='partial'; if(!t.ansNG)t.ansNG=[t.title]; toast('一部回答として待ち継続にしました'); }
+  else { t.status='archived'; t.noNeed=true; t.ball='self'; toast('対応不要として整理しました'); }
+  save(); closeSheet(); refreshCur();
+}
+
+/* =====================================================================
+   PROJECTS（作成・編集・工程操作・進捗連動）
+   ===================================================================== */
+function recomputeProject(p){
+  const tot=p.steps.length||1; const done=p.steps.filter(s=>s.s==='done').length;
+  p.progress=Math.round(done/tot*100);
+  if(p.progress===100)p.state='done';
+  else if(p.blocker){ p.state= daysSince(p.updated)>=5?'stall':'warn'; }
+  else if(daysSince(p.updated)>=7)p.state='stall';
+  else if(isOverdue(p.due))p.state='warn';
+  else p.state='ok';
+  return p;
+}
+function syncProjectFromTasks(pid){ const p=DB.projects.find(x=>x.id===pid); if(p)recomputeProject(p); }
+const PJ_STATE={ok:{l:'順調',c:'tag now'},warn:{l:'注意',c:'tag wait'},stall:{l:'停滞',c:'tag warn'},done:{l:'完了',c:'tag done'},hold:{l:'保留',c:'tag hold'}};
+function renderProjects(){
+  syncToday(); DB.projects.forEach(recomputeProject);
+  $('#projCt').textContent=`${DB.projects.length}件`;
+  $('#projList').innerHTML=`<button class="addbtn" onclick="newProject()">＋ 新規案件を作る</button>`+DB.projects.map(projCard).join('');
+}
+function projCard(p){
+  const ps=PJ_STATE[p.state]||PJ_STATE.ok;
+  const steps=p.steps.map((s,idx)=>{const cls=s.s,ic=s.s==='done'?'✓':s.s==='prog'?'●':'○';
+    return `<div class="step editable ${s.s==='done'?'is-done':''}" onclick="cycleStep('${p.id}',${idx})">
+      <span class="si ${cls}">${ic}</span><span class="sn">${esc(s.n)}</span>
+      <span class="del" onclick="event.stopPropagation();delStep('${p.id}',${idx})">×</span></div>`;}).join('');
+  return `<div class="proj st-${p.state}" style="border-top-color:${wsColor(p.ws)}">
+    <div class="pj-top"><div><div class="pj-nm">${esc(p.name)}</div><div class="pj-ws" style="color:${wsColor(p.ws)}">${esc(p.ws)}</div></div><span class="${ps.c}">${ps.l}</span></div>
+    ${p.blocker?`<div class="blocker">🚧 完了を妨げている項目：${esc(p.blocker)}</div>`:`<div class="blocker ok">✓ 現在ブロックしている項目はありません</div>`}
+    <div class="pj-row"><span class="pj-chip">現在の工程 <b>${esc(p.current||'-')}</b></span><span class="pj-chip">次にやること <b>${esc(p.next||'-')}</b></span><span class="pj-chip">期限 <b>${fmtDue(p.due)}</b></span></div>
+    <div class="steps">${steps||'<div class="empty" style="padding:14px">工程がありません。下のボタンで追加できます。</div>'}</div>
+    <div class="bar-wrap"><div class="bar-track"><div class="bar-fill" style="width:${p.progress}%"></div></div>
+      <div class="bar-lab"><span>参考進捗（工程の完了から自動計算）</span><span>約${p.progress}%</span></div></div>
+    <div class="pj-acts"><button onclick="addStep('${p.id}')">＋工程</button><button onclick="editProject('${p.id}')">案件を編集</button><button class="primary" onclick="advanceProject('${p.id}')">次工程を完了</button></div>
+  </div>`;
+}
+function cycleStep(pid,idx){ const p=DB.projects.find(x=>x.id===pid); const s=p.steps[idx];
+  s.s = s.s==='todo'?'prog':s.s==='prog'?'done':'todo'; p.updated=TODAY.toISOString();
+  const firstProg=p.steps.find(x=>x.s==='prog'); const firstTodo=p.steps.find(x=>x.s==='todo');
+  p.current=(firstProg||firstTodo||{}).n||'完了'; recomputeProject(p); save(); renderProjects();
+}
+function advanceProject(pid){ const p=DB.projects.find(x=>x.id===pid);
+  const i=p.steps.findIndex(s=>s.s!=='done'); if(i<0){toast('全工程が完了しています');return;}
+  p.steps[i].s='done'; p.updated=TODAY.toISOString();
+  const nx=p.steps.find(s=>s.s!=='done'); if(nx){nx.s='prog';p.current=nx.n;} else p.current='完了';
+  recomputeProject(p); save(); renderProjects(); toast(`「${p.steps[i].n}」を完了にしました`);
+}
+function delStep(pid,idx){ const p=DB.projects.find(x=>x.id===pid); p.steps.splice(idx,1); p.updated=TODAY.toISOString(); recomputeProject(p); save(); renderProjects(); }
+function addStep(pid){
+  openSheet(`<h3>工程を追加</h3><div class="edit-fld"><label>工程名</label><input id="stepName" placeholder="例：ナレーション収録"></div>
+    <div class="sheet-acts"><button class="ed" onclick="closeSheet()">やめる</button><button class="ok" onclick="saveStep('${pid}')">追加する</button></div>`);
+  setTimeout(()=>$('#stepName')&&$('#stepName').focus(),200);
+}
+function saveStep(pid){ const v=$('#stepName').value.trim(); if(!v){toast('工程名を入力してください');return;}
+  const p=DB.projects.find(x=>x.id===pid); p.steps.push({n:v,s:'todo'}); p.updated=TODAY.toISOString(); recomputeProject(p); save(); closeSheet(); renderProjects(); }
+function newProject(){
+  const wsOpts=wsNames().filter(w=>w!=='未分類').map(w=>`<option>${esc(w)}</option>`).join('');
+  openSheet(`<h3>新規案件</h3>
+    <div class="edit-fld"><label>案件名</label><input id="np_name" placeholder="例：秋の新商品ローンチ"></div>
+    <div class="edit-row2"><div class="edit-fld"><label>所属</label><select id="np_ws">${wsOpts}</select></div>
+      <div class="edit-fld"><label>期限</label><input type="datetime-local" id="np_due"></div></div>
+    <div class="edit-fld"><label>最初の工程（改行で複数）</label><textarea id="np_steps" placeholder="要件整理&#10;デザイン案&#10;制作&#10;確認"></textarea></div>
+    <div class="sheet-acts"><button class="ed" onclick="closeSheet()">やめる</button><button class="ok" onclick="saveNewProject()">作成する</button></div>`);
+}
+function saveNewProject(){
+  const name=$('#np_name').value.trim(); if(!name){toast('案件名を入力してください');return;}
+  const ws=$('#np_ws').value; const due=fromLocalInput($('#np_due').value);
+  const steps=$('#np_steps').value.split('\n').map(x=>x.trim()).filter(Boolean).map((n,i)=>({n,s:i===0?'prog':'todo'}));
+  const p={id:'p'+Date.now(),ws,name,blocker:null,current:steps[0]?steps[0].n:'',next:'',due,updated:TODAY.toISOString(),steps:steps.length?steps:[{n:'着手',s:'prog'}]};
+  recomputeProject(p); DB.projects.unshift(p); save(); closeSheet(); renderProjects(); toast('案件を作成しました');
+}
+function editProject(pid){
+  const p=DB.projects.find(x=>x.id===pid); const wsOpts=wsNames().filter(w=>w!=='未分類').map(w=>`<option ${w===p.ws?'selected':''}>${esc(w)}</option>`).join('');
+  openSheet(`<h3>案件を編集</h3>
+    <div class="edit-fld"><label>案件名</label><input id="ep_name" value="${esc(p.name)}"></div>
+    <div class="edit-row2"><div class="edit-fld"><label>所属</label><select id="ep_ws">${wsOpts}</select></div>
+      <div class="edit-fld"><label>期限</label><input type="datetime-local" id="ep_due" value="${toLocalInput(p.due)}"></div></div>
+    <div class="edit-fld"><label>完了を妨げている項目（空欄でクリア）</label><input id="ep_blk" value="${esc(p.blocker||'')}" placeholder="（なし）"></div>
+    <div class="edit-fld"><label>次にやること</label><input id="ep_next" value="${esc(p.next||'')}"></div>
+    <div class="sheet-acts"><button class="ed" onclick="deleteProject('${pid}')" style="background:var(--red-bg);color:var(--red);border-color:#f3c9c9">削除</button>
+      <button class="ok" onclick="saveProject('${pid}')">保存する</button></div>`);
+}
+function saveProject(pid){
+  const p=DB.projects.find(x=>x.id===pid);
+  p.name=$('#ep_name').value.trim()||p.name; p.ws=$('#ep_ws').value; p.due=fromLocalInput($('#ep_due').value);
+  p.blocker=$('#ep_blk').value.trim()||null; p.next=$('#ep_next').value.trim()||''; p.updated=TODAY.toISOString();
+  recomputeProject(p); save(); closeSheet(); renderProjects(); toast('保存しました');
+}
+function deleteProject(pid){ const i=DB.projects.findIndex(x=>x.id===pid); if(i<0)return; DB.projects.splice(i,1); save(); closeSheet(); renderProjects(); toast('案件を削除しました'); }
+
+/* =====================================================================
+   SECRETARY（質問応答＋命令実行）
+   ===================================================================== */
+const QUICK=['今日何からやればいい？','返事を待っている人は？','30分でできる仕事は？','今止まっている仕事は？','三高産業だけ見せて','佐藤さんに何を確認する？','明日の準備を教えて'];
+function renderSecretary(){
+  $('#quickChips').innerHTML=QUICK.map(q=>`<button class="chip" onclick="askChat('${esc(q)}')">${esc(q)}</button>`).join('');
+  if(!DB.chat||!DB.chat.length)DB.chat=[{r:'ai',t:'こんにちは。PILOTです。今日の状況はホームにまとめてあります。\n「今日は何からやればいい？」のほか、「今日のREIKIを全部明日に移して」のような指示も実行できます。'}];
+  drawChat();
+}
+function drawChat(){ $('#chatLog').innerHTML=DB.chat.map(m=>`<div class="bubble ${m.r} ${m.act?'act':''}" ${m.typing?'style="opacity:.55;font-style:italic"':''}>${m.r==='ai'?fmtAI(m.t):esc(m.t)}</div>`).join(''); window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); }
+function fmtAI(t){ return esc(t).replace(/「(.+?)」/g,'<b>「$1」</b>'); }
+function askChat(q){ $('#chatInput').value=q; sendChat(); }
+function chatVoice(){
+  const btn=$('#chatMic'); if(recog&&recTarget==='chat'){recog.stop();return;}
+  recog=getRecog(); if(!recog){toast('音声入力に未対応です');return;}
+  recTarget='chat'; btn.classList.add('rec');
+  recog.onresult=e=>{let txt='';for(let i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;$('#chatInput').value=txt;};
+  recog.onend=()=>{btn.classList.remove('rec');recog=null;if($('#chatInput').value.trim())sendChat();};
+  recog.start();
+}
+async function sendChat(){
+  const v=$('#chatInput').value.trim(); if(!v)return;
+  DB.chat.push({r:'me',t:v}); $('#chatInput').value='';
+  if(aiEnabled()){
+    DB.chat.push({r:'ai',t:'考え中…',typing:true}); drawChat();
+    try{
+      const out=await aiChat(v);
+      DB.chat=DB.chat.filter(m=>!m.typing);
+      const done=applyAIActions(out.actions||[]);
+      let msg=out.reply||'';
+      if(done.length)msg+=(msg?'\n\n':'')+done.join('\n');
+      DB.chat.push({r:'ai',t:msg||'（応答なし）',act:done.length>0});
+      save(); drawChat(); if(done.length)refreshCur();
+      return;
+    }catch(e){
+      DB.chat=DB.chat.filter(m=>!m.typing);
+      DB.chat.push({r:'ai',t:`（Claude接続に失敗: ${aiErrMsg(e)} → ルール応答に切替）`});
+      drawChat();
+    }
+  }
+  const cmd=tryCommand(v);
+  if(cmd){ DB.chat.push({r:'ai',t:cmd,act:true}); save(); drawChat(); refreshCur(); return; }
+  DB.chat.push({r:'ai',t:answerQuery(v)}); save(); drawChat();
+}
+function findTasksByText(q){
+  const ws=detectWS(q);
+  let pool=activeTasks();
+  if(ws!=='未分類'&&/三高|REIKI|レイキ|OLIVE|オリーブ|家族|プライベート/i.test(q))pool=pool.filter(t=>t.ws===ws);
+  // タイトル語一致
+  const words=q.replace(/(今日|明日|来週|全部|を|の|に|へ|は|移して|回して|延期|対応不要|返事待ち).*/g,'').trim();
+  return {ws,pool};
+}
+function tryCommand(q){
+  // 一括リスケ：「今日のREIKIを全部明日に移して」など
+  const wsMatch=/(三高産業|三高|REIKI|レイキ|OLIVE|オリーブ|プライベート|家族)/i.exec(q);
+  const parts=q.split(/全部|まとめて|すべて/);                 // 行先は「全部」より後ろから判定
+  const head=parts[0]||'', tail=parts[1]||q;
+  const moveTo=/(明後日|明日|来週|今日)/.exec(tail);
+  if(/(全部|まとめて|すべて)/.test(q)&&/(移し|回し|延期|ずらし)/.test(q)&&moveTo){
+    const ws=wsMatch?detectWS(wsMatch[0]):null;
+    let targets=activeTasks().filter(t=>t.ball==='self');
+    if(ws&&ws!=='未分類')targets=targets.filter(t=>t.ws===ws);
+    if(/今日/.test(head))targets=targets.filter(t=>t.status==='now');
+    if(!targets.length)return `対象になる仕事が見つかりませんでした。`;
+    const lbl=moveTo[0], off=/明後日/.test(lbl)?2:/来週/.test(lbl)?7:/今日/.test(lbl)?0:1;
+    targets.forEach(t=>{ const nd=addD(off); if(t.due){const o=new Date(t.due);nd.setHours(o.getHours(),o.getMinutes(),0,0);}else nd.setHours(18,0,0,0); t.due=nd.toISOString(); t.updated=TODAY.toISOString(); });
+    save(); return `${ws&&ws!=='未分類'?ws+'の':''}${targets.length}件を${lbl}へ移しました。`;
+  }
+  // 単体リスケ：「「○○」を来週に回して」
+  const qm=q.match(/[「『](.+?)[」』]/);
+  if(qm&&/(来週|明日|明後日|今日)/.test(q)&&/(移し|回し|延期|ずらし)/.test(q)){
+    const t=activeTasks().find(x=>x.title.includes(qm[1]));
+    if(t){ const lbl=/明後日/.test(q)?'明後日':/来週/.test(q)?'来週':/今日/.test(q)?'今日':'明日';
+      const off=/明後日/.test(q)?2:/来週/.test(q)?7:/今日/.test(q)?0:1;
+      const nd=addD(off);                                  // ← TODAY基準の絶対日付（月またぎ誤りを修正）
+      if(t.due){ const o=new Date(t.due); nd.setHours(o.getHours(),o.getMinutes(),0,0); } else nd.setHours(18,0,0,0);
+      t.due=nd.toISOString(); t.updated=TODAY.toISOString(); save();
+      return `「${t.title}」を${lbl}（${fmtDue(t.due)}）に移しました。`; }
+  }
+  // 対応不要
+  if(qm&&/(対応不要|やらなくて|不要)/.test(q)){ const t=activeTasks().find(x=>x.title.includes(qm[1])); if(t){t.status='archived';t.noNeed=true;t.updated=TODAY.toISOString();save();return `「${t.title}」を対応不要として整理しました。`;} }
+  // 返事待ちにして
+  if(qm&&/(返事待ち|相手待ち|待ちに)/.test(q)){ const t=activeTasks().find(x=>x.title.includes(qm[1])); if(t){t.ball='other';t.status='wait';t.nextCheck=t.nextCheck||dPlus(3);t.updated=TODAY.toISOString();save();return `「${t.title}」を相手の返事待ちにしました（3日後に確認）。`;} }
+  return null;
+}
+function answerQuery(q){
+  const act=activeTasks();
+  if(/三高/.test(q))return listAns('三高産業の仕事',act.filter(t=>t.ws==='三高産業'));
+  if(/REIKI|レイキ/i.test(q))return listAns('REIKIの仕事',act.filter(t=>t.ws==='REIKI'));
+  if(/OLIVE|オリーブ/i.test(q))return listAns('OLIVEの仕事',act.filter(t=>t.ws==='OLIVE'));
+  if(/佐藤/.test(q)){const t=act.find(x=>/佐藤/.test(x.person||''));if(t){const ng=t.ansNG||[t.title];return `佐藤さんへの確認事項は${ng.length}件です。\n`+ng.map((x,i)=>`${i+1}. ${x}`).join('\n')+`\n\nフォロー画面の「確認文を作る」で文面を用意できます。`;}return '佐藤さんへの確認事項は今はありません。';}
+  if(/返事|回答|待っている人|待ってる/.test(q)){const w=waitingTasks().filter(t=>t.ball==='other'||t.ball==='team');if(!w.length)return '今、返事待ちの仕事はありません。';return `返事待ちは${w.length}件です。\n`+w.map(t=>`・${t.person||'相手'}：${t.title}（${t.nextCheck?fmtDue(t.nextCheck)+'確認':'確認日未設定'}）`).join('\n')+(w.some(t=>isOverdue(t.nextCheck))?'\n\n⚠️ 確認予定を過ぎている相手がいます。':'');}
+  if(/30分|短時間|すぐ|空き時間/.test(q))return listAns('30分以内でできる仕事',act.filter(t=>t.ball==='self'&&t.mins&&t.mins<=30).sort((a,b)=>a.mins-b.mins));
+  if(/外出|出先|移動中/.test(q))return listAns('外出中でもできる仕事',act.filter(t=>t.ball==='self'&&(/電話|連絡|返信/.test(t.next||'')||t.mins<=10)));
+  if(/止ま|停滞|進んでない/.test(q)){const s=detectStalls();if(!s.length)return '止まっている仕事はありません。順調です。';return `止まっている仕事は${s.length}件です。\n`+s.map(x=>`・${x.t.title}（${x.reason}）`).join('\n')+`\n\nホームの「気になること」から次にやることを作れます。`;}
+  if(/今週中.*終わら|間に合/.test(q)){const r=act.filter(t=>t.ball==='self'&&(!t.next||(t.deferCount||0)>=2||daysSince(t.updated)>=5));return r.length?`今週中に終わらない可能性がある仕事：\n`+r.map(t=>`・${t.title}`).join('\n'):'今のところ、今週中に間に合わない懸念のある仕事はありません。';}
+  if(/明日.*準備|明日.*教え/.test(q)){const tom=act.filter(t=>t.due&&fmtDue(t.due).startsWith('明日'));return `明日の準備です。\n`+(tom.length?tom.map(t=>`・${t.title}（${t.ws}）`).join('\n'):'明日期限の仕事はありません。')+`\n返事待ちの確認も忘れずに。`;}
+  if(/今日.*何|何から|優先|まず/.test(q)){const h=pickHero();if(!h)return '今日、自分が動く仕事は片付いています。返事待ちはAIが追跡中です。';const today=act.filter(t=>t.ball==='self'&&t.status==='now');return `まず「${h.title}」から始めましょう。${h.due?`期限は${fmtDue(h.due)}`:''}${h.reason?'、'+h.reason:''}。\n今日、自分が動く仕事は全部で${today.length}件です。`;}
+  const h=pickHero();
+  return `ご質問を確認しました。今やるべきは「${h?h.title:'特になし'}」です。\n「返事を待っている人は？」「30分でできる仕事は？」「今日のREIKIを全部明日に移して」などにも対応できます。`;
+}
+function listAns(label,list){ if(!list.length)return `${label}は今ありません。`; return `${label}は${list.length}件です。\n`+list.slice(0,6).map(t=>`・${t.title}${t.due?'（'+fmtDue(t.due)+'）':''} ${(BALL[t.ball]||BALL.self).icon}`).join('\n'); }
+
+/* =====================================================================
+   MODE / BADGES / SETTINGS / NOTIFY / BACKUP
+   ===================================================================== */
+function openMode(){
+  openSheet(`<h3>今日の状態</h3><p class="desc">選んだ状態に合わせてAIの提案を変えます。</p>
+    ${Object.entries(MODES).map(([k,m])=>`<button class="opt ${k===mode?'sel':''}" onclick="setMode('${k}')"><span class="oi">${m.icon}</span><span class="ob">${m.label}<div class="od">${m.desc}</div></span>${k===mode?'<span style="color:var(--navy);font-weight:800">✓</span>':''}</button>`).join('')}`);
+}
+function setMode(k){ mode=k; save(); const m=MODES[k]; $('#modeChip').className='mode-chip '+m.cls; $('#modeLabel').textContent=m.label; closeSheet(); toast(`モード：${m.label}`); renderHome(); }
+function updateBadges(){
+  const need=waitingTasks().filter(t=>isOverdue(t.nextCheck||t.due)||(t.nextCheck&&fmtDue(t.nextCheck).startsWith('今日'))).length;
+  const b=$('#navFollowBadge'); if(need){b.textContent=need;b.classList.remove('hidden');}else b.classList.add('hidden');
+}
+
+function openSettings(){
+  const s=DB.settings; const seg=(field,val,opts)=>`<div class="segbtns">${opts.map(o=>`<button class="${s[field]===o[0]?'on':''}" onclick="setSetting('${field}','${o[0]}')">${o[1]}</button>`).join('')}</div>`;
+  const notifyState = (typeof Notification!=='undefined') ? Notification.permission : 'unsupported';
+  openSettings_html(s,seg,notifyState);
+}
+function openSettings_html(s,seg,notifyState){
+  openSheet(`<h3>設定</h3>
+    <div class="set-h">通知</div>
+    <div class="set-row"><div><div class="sl">通知を使う</div><div class="sd">期限・確認時刻・朝のブリーフィングを知らせます</div></div>
+      <div class="switch ${s.notify?'on':''}" onclick="toggleSetting('notify',this)"></div></div>
+    <div class="set-row"><div><div class="sl">通知の許可</div><div class="sd">${notifyState==='granted'?'✅ 許可済み':notifyState==='denied'?'❌ ブラウザでブロック中':notifyState==='unsupported'?'この端末は未対応':'未許可'}</div></div>
+      ${notifyState==='granted'||notifyState==='unsupported'?'':`<button class="ftab" onclick="reqNotify()">許可する</button>`}</div>
+    <div class="set-row"><div><div class="sl">通知の強さ</div></div>${seg('strength','strength',[['min','最小限'],['std','標準'],['strong','しっかり']])}</div>
+    <div class="set-row"><div><div class="sl">通知の内容</div><div class="sd">プライバシー</div></div>${seg('privacy','privacy',[['name','案件名'],['hidden','件名なし']])}</div>
+    <div class="set-row"><div><div class="sl">朝のブリーフィング</div></div><div class="switch ${s.morningBrief?'on':''}" onclick="toggleSetting('morningBrief',this)"></div></div>
+    <div class="set-row"><div><div class="sl">夜の振り返り</div></div><div class="switch ${s.nightReview?'on':''}" onclick="toggleSetting('nightReview',this)"></div></div>
+    <div class="note-box">⚠️ <b>閉じている間のプッシュ通知</b>は、サーバー（バックエンド）が必要です。現状はアプリを開いている間に通知します。</div>
+
+    <div class="set-h">本物のAI（Claude API）</div>
+    <div class="set-row"><div><div class="sl">接続状態</div><div class="sd">${getApiKey()?'✅ 設定済み — 解析と秘書会話がClaudeで動作':'未設定 — ルール解析で動作中'}</div></div>
+      ${getApiKey()?`<button class="ftab" onclick="testAI()">接続テスト</button>`:''}</div>
+    <div class="edit-fld" style="margin-top:8px"><label>Anthropic APIキー${getApiKey()?'（変更する場合のみ入力）':''}</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off"></div>
+    <div class="segbtns" style="margin-bottom:10px">
+      <button class="on" onclick="saveApiKey()">保存</button>
+      ${getApiKey()?`<button onclick="clearApiKey()">キーを削除</button>`:''}
+    </div>
+    <div class="set-row"><div><div class="sl">モデル</div><div class="sd">解析・秘書会話に使用</div></div>
+      <div class="segbtns">${[['claude-opus-4-8','高性能'],['claude-haiku-4-5','高速・低コスト']].map(o=>`<button class="${(DB.settings.aiModel||'claude-opus-4-8')===o[0]?'on':''}" onclick="setSetting('aiModel','${o[0]}')">${o[1]}</button>`).join('')}</div></div>
+    <div class="note-box">🔐 キーは<b>この端末にのみ</b>保存され、バックアップJSONには含まれません。通信は端末→Anthropicへ直接。オフライン・エラー時は自動でルール解析に切り替わります。<br>💴 目安：高性能=1回あたり数円、高速・低コスト=1円未満（Anthropicに使った分だけ課金）。キーは console.anthropic.com で発行できます。</div>
+
+    <div class="set-h">ワークスペース</div>
+    <div class="set-row"><div><div class="sl">仕事領域を管理</div><div class="sd">${wsNames().filter(n=>n!=='未分類').join('・')||'（未登録）'}</div></div><button class="ftab" onclick="openWorkspaces()">編集</button></div>
+
+    <div class="set-h">データ・バックアップ</div>
+    <div class="set-row"><div><div class="sl">バックアップを書き出す</div><div class="sd">JSONファイルで保存（機種変更・復元用）</div></div><button class="ftab" onclick="exportData()">書き出す</button></div>
+    <div class="set-row"><div><div class="sl">バックアップを読み込む</div><div class="sd">別端末のデータを復元</div></div><button class="ftab" onclick="document.getElementById('importFile').click()">読み込む</button></div>
+    <div class="note-box">⚠️ 保存先はこの端末（localStorage）です。<b>クラウド同期・アカウント</b>はサーバーが必要なため、現状は手動バックアップで代替しています。元音声は保存していません。</div>
+
+    <div class="set-h">AIの記憶（確認・修正）</div>
+    <div id="memList">${memListHtml()}</div>
+
+    <div class="set-h">週次クリーンアップ</div>
+    <div class="set-row"><div><div class="sl">古い仕事を10件だけ整理</div><div class="sd">長期停滞・次の行動なしなどを確認</div></div><button class="ftab" onclick="weeklyCleanup()">実行</button></div>
+
+    <div class="set-h" style="color:var(--red)">リセット</div>
+    <button class="danger-btn" onclick="resetData()">すべてのデータを初期化</button>
+    <p class="desc" style="text-align:center;margin-top:12px">PILOT V0.2 ／ 実日付・通知・編集対応版</p>`);
+}
+function memListHtml(){
+  const items=[...DB.memory.map((m,i)=>({t:m,k:'mem',i})),...DB.learned.map((l,i)=>({t:`${l.person} → ${l.ws}（${l.count}回）`,k:'learn',i}))];
+  if(!items.length)return `<div class="desc">まだ学習した項目はありません。</div>`;
+  return items.map(x=>`<div class="mem-item"><span class="mt">${esc(x.t)}</span>
+    <button onclick="editMemory('${x.k}',${x.i})">修正</button><button onclick="delMemory('${x.k}',${x.i})">削除</button></div>`).join('');
+}
+function editMemory(k,i){
+  const cur=k==='mem'?DB.memory[i]:`${DB.learned[i].person} → ${DB.learned[i].ws}`;
+  openSheet(`<h3>記憶を修正</h3><p class="desc">AIが覚えている内容を直せます（誤学習を放置しません）。</p>
+    <div class="edit-fld"><input id="memEdit" value="${esc(cur)}"></div>
+    <div class="sheet-acts"><button class="ed" onclick="openSettings()">戻る</button><button class="ok" onclick="saveMemory('${k}',${i})">保存</button></div>`);
+  setTimeout(()=>$('#memEdit')&&$('#memEdit').focus(),200);
+}
+function saveMemory(k,i){ const v=$('#memEdit').value.trim(); if(!v){toast('内容を入力してください');return;}
+  if(k==='mem')DB.memory[i]=v; else { const m=v.split('→'); DB.learned[i].person=(m[0]||'').trim(); if(m[1])DB.learned[i].ws=m[1].trim(); }
+  save(); openSettings(); toast('記憶を更新しました'); }
+function delMemory(k,i){ if(k==='mem')DB.memory.splice(i,1); else DB.learned.splice(i,1); save(); openSettings(); toast('削除しました'); }
+
+function toggleSetting(field,el){ DB.settings[field]=!DB.settings[field]; el.classList.toggle('on',DB.settings[field]); save(); if(field==='notify'&&DB.settings.notify)reqNotify(); }
+function setSetting(field,val){ DB.settings[field]=val; save(); openSettings(); }
+function reqNotify(){
+  if(typeof Notification==='undefined'){toast('この端末は通知に未対応です');return;}
+  Notification.requestPermission().then(p=>{ openSettings(); if(p==='granted'){toast('通知を許可しました');startNotifyLoop();} else toast('通知が許可されませんでした'); });
+}
+
+/* 通知ループ（開いている間） */
+function startNotifyLoop(){ if(notifyTimer)clearInterval(notifyTimer); notifyTimer=setInterval(notifyTick,60000); notifyTick(); }
+function privTitle(t){ return DB.settings.privacy==='hidden'?'確認事項があります':(t.title||'タスク'); }
+function fire(title,body){ try{ new Notification(title,{body,tag:title}); }catch(e){} }
+function notifyTick(){
+  syncToday();
+  if(!DB.settings.notify||mode==='off')return;
+  if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
+  DB.notified=DB.notified||[]; let changed=false;
+  const str=DB.settings.strength||'std';
+  const mark=k=>{ if(DB.notified.includes(k))return false; DB.notified.push(k); changed=true; return true; };
+  // 朝のブリーフィング（標準以上＋トグルON）
+  if(str!=='min'&&DB.settings.morningBrief&&TODAY.getHours()>=7&&TODAY.getHours()<11){
+    if(mark('brief-'+dayKey())){ const h=pickHero(),w=waitingTasks().length; fire('☀️ 今日のブリーフィング',(h?`最重要：${privTitle(h)} ／ `:'')+`返事待ち${w}件`); }
+  }
+  // 返事の確認時刻（全強度）
+  waitingTasks().forEach(t=>{ const due=t.nextCheck||t.due; if(due&&new Date(due)<=TODAY){ if(mark('chk-'+t.id+'-'+due))fire('🔔 確認の時間です',privTitle(t)+(t.person?`（${t.person}）`:'')); } });
+  // 期限超過（標準以上）
+  if(str!=='min'){ activeTasks().filter(t=>t.ball==='self'&&isOverdue(t.due)).forEach(t=>{ if(mark('over-'+t.id+'-'+t.due))fire('⚠️ 期限を過ぎています',privTitle(t)); }); }
+  // 「しっかり」だけ：期限の事前アラート＋夜の振り返り通知
+  if(str==='strong'){
+    activeTasks().filter(t=>t.ball==='self'&&t.due&&new Date(t.due)>TODAY&&(new Date(t.due)-TODAY)<=90*60000).forEach(t=>{ if(mark('soon-'+t.id+'-'+t.due))fire('⏰ まもなく期限',privTitle(t)+`（${fmtDue(t.due)}）`); });
+    if(DB.settings.nightReview&&TODAY.getHours()>=20){ if(mark('nightN-'+dayKey()))fire('🌙 夜の振り返り','今日の完了確認と、明日へ移す仕事をチェックしましょう'); }
+  }
+  if(DB.notified.length>240)DB.notified=DB.notified.slice(-140);
+  if(changed)save();
+}
+function nightReviewCheck(){
+  if(!DB.settings.nightReview||TODAY.getHours()<20)return;
+  DB.notified=DB.notified||[]; const key='nightR-'+dayKey();
+  if(DB.notified.includes(key))return; DB.notified.push(key); save();
+  const done=DB.tasks.filter(t=>t.status==='done'&&daysSince(t.updated)===0).length;
+  const carry=activeTasks().filter(t=>t.ball==='self'&&t.status==='now'&&t.due&&fmtDue(t.due).startsWith('今日')).length;
+  const open=waitingTasks().filter(t=>isOverdue(t.nextCheck||t.due)).length;
+  setTimeout(()=>openSheet(`<h3>🌙 夜の振り返り</h3><p class="desc">3つだけ確認します。設定でオフにできます。</p>
+    <div class="pr"><div class="fld"><span class="fk">今日完了</span><span class="fv">${done}件 — 内容に間違いはありませんか？</span></div>
+      <div class="fld"><span class="fk">明日へ</span><span class="fv">未完了 ${carry}件 を明日に移しますか？</span></div>
+      <div class="fld"><span class="fk">連絡漏れ</span><span class="fv">返事待ちの確認超過 ${open}件</span></div></div>
+    <div class="sheet-acts"><button class="ed" onclick="closeSheet()">後で</button><button class="ok" onclick="nightMoveTomorrow()">未完了を明日へ</button></div>`),700);
+}
+function nightMoveTomorrow(){
+  activeTasks().filter(t=>t.ball==='self'&&t.status==='now'&&t.due&&fmtDue(t.due).startsWith('今日')).forEach(t=>{ const nd=addD(1); const o=new Date(t.due); nd.setHours(o.getHours(),o.getMinutes(),0,0); t.due=nd.toISOString(); t.updated=TODAY.toISOString(); });
+  save(); closeSheet(); toast('未完了を明日へ移しました'); refreshCur();
+}
+
+/* バックアップ */
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  const d=TODAY; a.href=url; a.download=`pilot-backup-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.json`;
+  a.click(); URL.revokeObjectURL(url); toast('バックアップを書き出しました');
+}
+function importData(ev){
+  const f=ev.target.files[0]; if(!f)return; const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d.tasks)throw 0; DB=ensureSettings(d); DB.version=DB_VERSION; mode=DB.mode||'normal'; save();
+    closeSheet(); const m=MODES[mode]; $('#modeChip').className='mode-chip '+m.cls; $('#modeLabel').textContent=m.label; go('home'); toast('バックアップを読み込みました'); }
+    catch(e){ toast('読み込めませんでした（ファイル形式を確認）'); } };
+  r.readAsText(f); ev.target.value='';
+}
+function resetData(){
+  openSheet(`<h3>初期化しますか？</h3><p class="desc">この端末のPILOTデータをすべて消去し、初期状態に戻します。元に戻せません。先にバックアップを書き出すことをおすすめします。</p>
+    <div class="sheet-acts"><button class="ed" onclick="openSettings()">やめる</button><button class="ok" style="background:var(--red)" onclick="doReset()">初期化する</button></div>`);
+}
+function doReset(){ localStorage.removeItem('pilot_db'); DB=seed(); mode='normal'; save(); closeSheet(); const m=MODES[mode]; $('#modeChip').className='mode-chip '+m.cls; $('#modeLabel').textContent=m.label; go('home'); toast('初期化しました'); }
+
+/* 週次クリーンアップ */
+let cleanupQueue=[],cleanupIdx=0;
+function cleanupCandidates(){
+  return DB.tasks.filter(t=>!TERMINAL.includes(t.status)&&(daysSince(t.updated)>=7||(t.ball==='self'&&!t.next)||(isOverdue(t.due)&&t.ball==='self')||(t.deferCount||0)>=3)).slice(0,10);
+}
+function snoozeCleanup(){ DB.lastCleanup=TODAY.toISOString(); save(); renderHome(); toast('今週はスキップしました'); }
+function weeklyCleanup(){
+  const cand=cleanupCandidates();
+  if(!cand.length){ DB.lastCleanup=TODAY.toISOString(); save(); openSheet(`<h3>週次クリーンアップ</h3><p class="desc">整理が必要な仕事はありません。きれいな状態です ✨</p><div class="sheet-acts"><button class="ok" onclick="closeSheet();renderHome()">閉じる</button></div>`);return;}
+  cleanupQueue=cand;cleanupIdx=0;showCleanup();
+}
+function showCleanup(){
+  if(cleanupIdx>=cleanupQueue.length){DB.lastCleanup=TODAY.toISOString();save();closeSheet();toast('週次クリーンアップ完了');refreshCur();return;}
+  const t=cleanupQueue[cleanupIdx];
+  openSheet(`<h3>週次クリーンアップ ${cleanupIdx+1}/${cleanupQueue.length}</h3>
+    <p class="desc">この仕事は ${daysSince(t.updated)}日間動いていません。今の状態はどれですか？</p>
+    <div class="pr"><div class="fld"><span class="fk">仕事</span><span class="fv">${esc(t.title)}（${esc(t.ws)}）</span></div></div>
+    <button class="opt" onclick="cleanupDo('keep')"><span class="oi">📌</span><span class="ob">まだ必要</span></button>
+    <button class="opt" onclick="cleanupDo('wait')"><span class="oi">⏳</span><span class="ob">相手を待っている</span></button>
+    <button class="opt" onclick="cleanupDo('hold')"><span class="oi">⏸</span><span class="ob">今は保留</span></button>
+    <button class="opt" onclick="cleanupDo('done')"><span class="oi">✅</span><span class="ob">完了した</span></button>
+    <button class="opt" onclick="cleanupDo('none')"><span class="oi">🗑</span><span class="ob">対応不要</span></button>`);
+}
+function cleanupDo(act){
+  const t=cleanupQueue[cleanupIdx]; t.updated=TODAY.toISOString();
+  if(act==='keep'){t.status='now';if(!t.next)t.next='最初の一手を決める';}
+  else if(act==='wait'){t.ball='other';t.status='wait';t.nextCheck=dPlus(3);}
+  else if(act==='hold')t.status='hold'; else if(act==='done')t.status='done';
+  else if(act==='none'){t.status='archived';t.noNeed=true;}
+  cleanupIdx++; save(); showCleanup();
+}
+
+/* 数日ぶり復帰 */
+function reentryCheck(){
+  const gap=daysSince(DB.lastOpen); DB.lastOpen=TODAY.toISOString(); save();
+  if(gap>=3){
+    const fa=waitingTasks(); const over=fa.filter(t=>isOverdue(t.nextCheck||t.due)).length;
+    const todayChk=fa.filter(t=>t.nextCheck&&fmtDue(t.nextCheck).startsWith('今日')).length;
+    const urgent=activeTasks().filter(t=>t.ball==='self'&&isOverdue(t.due)).length;
+    setTimeout(()=>openSheet(`<h3>${gap}日ぶりですね</h3><p class="desc">通知を一つずつ見る必要はありません。AIが状況をまとめ直しました。</p>
+      <div class="pr"><div class="fld"><span class="fk">緊急</span><span class="fv">${urgent}件</span></div>
+        <div class="fld"><span class="fk">今日確認</span><span class="fv">${todayChk}件</span></div>
+        <div class="fld"><span class="fk">期限超過</span><span class="fv">${over}件</span></div>
+        <div class="fld"><span class="fk">古い通知</span><span class="fv">まとめて整理済み</span></div></div>
+      <div class="sheet-acts"><button class="ok" onclick="closeSheet()">まず今やる仕事を見る</button></div>`),500);
+  }
+}
+
+/* =====================================================================
+   予定の手動追加・削除（毎日固定を解消・日付別）
+   ===================================================================== */
+function addSchedule(){
+  openSheet(`<h3>予定を追加</h3><p class="desc">${fmtFull(TODAY)} の予定を登録します。</p>
+    <div class="edit-row2"><div class="edit-fld"><label>時刻</label><input type="time" id="sc_t" value="09:00"></div>
+      <div class="edit-fld" style="flex:2"><label>内容</label><input id="sc_ev" placeholder="例：取引先訪問"></div></div>
+    <div class="sheet-acts"><button class="ed" onclick="closeSheet()">やめる</button><button class="ok" onclick="saveSchedule()">追加する</button></div>`);
+  setTimeout(()=>$('#sc_ev')&&$('#sc_ev').focus(),200);
+}
+function saveSchedule(){ const t=$('#sc_t').value||'09:00', ev=$('#sc_ev').value.trim(); if(!ev){toast('内容を入力してください');return;}
+  DB.schedule.push({date:dayKey(TODAY),t,ev}); save(); closeSheet(); renderHome(); toast('予定を追加しました'); }
+function delSchedule(i){ DB.schedule.splice(i,1); save(); renderHome(); }
+
+/* =====================================================================
+   検索・完了履歴
+   ===================================================================== */
+let searchFilter='all';
+function openSearch(){
+  searchFilter='all';
+  openSheet(`<h3>検索・履歴</h3>
+    <div class="edit-fld"><input id="sq" placeholder="キーワード・相手・会社名で検索" oninput="runSearch()"></div>
+    <div class="segbtns" style="flex-wrap:wrap;margin-bottom:12px" id="sqfilters">
+      ${[['all','すべて'],['active','進行中'],['done','完了履歴'],['三高産業','三高'],['REIKI','REIKI'],['OLIVE','OLIVE'],['プライベート','私生活']].map((f,idx)=>`<button class="${idx===0?'on':''}" data-f="${f[0]}" onclick="setSearchFilter(this)">${f[1]}</button>`).join('')}</div>
+    <div id="sqResults"></div>`);
+  setTimeout(()=>{ if($('#sq'))$('#sq').focus(); runSearch(); },150);
+}
+function setSearchFilter(btn){ document.querySelectorAll('#sqfilters button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); searchFilter=btn.dataset.f; runSearch(); }
+function runSearch(){
+  const q=($('#sq')?$('#sq').value:'').trim();
+  let list=DB.tasks.slice();
+  if(searchFilter==='active')list=list.filter(t=>!TERMINAL.includes(t.status));
+  else if(searchFilter==='done')list=list.filter(t=>t.status==='done'||t.status==='archived');
+  else if(['三高産業','REIKI','OLIVE','プライベート'].includes(searchFilter))list=list.filter(t=>t.ws===searchFilter);
+  if(q)list=list.filter(t=>[t.title,t.person,t.ws,t.next].filter(Boolean).some(x=>x.includes(q)));
+  list.sort((a,b)=>new Date(b.updated)-new Date(a.updated));
+  const tg=s=>({now:'now',wait:'wait',warn:'warn',done:'done',hold:'hold',archived:'hold'})[s]||'now';
+  const html=list.slice(0,40).map(t=>`<div class="mini" style="border-left-color:${wsColor(t.ws)}">
+    <div class="m-body" onclick="closeSheet();setTimeout(function(){openEdit('${t.id}')},260)"><div class="m-ttl">${esc(t.title)}${t.photo?' 📎':''}</div>
+    <div class="m-sub"><span class="ws" style="color:${wsColor(t.ws)}">${esc(t.ws)}</span>${t.person?`<span>${esc(t.person)}</span>`:''}<span class="tag ${tg(t.status)}">${statusJa(t.status)}</span>${t.due?`<span>🕐${fmtDue(t.due)}</span>`:''}</div></div></div>`).join('');
+  $('#sqResults').innerHTML=html||`<div class="empty">該当する仕事はありません</div>`;
+}
+
+/* =====================================================================
+   ワークスペース管理（自由作成・改名・削除）
+   ===================================================================== */
+function openWorkspaces(){
+  const ws=DB.workspaces.filter(w=>w.name!=='未分類');
+  openSheet(`<h3>ワークスペース</h3><p class="desc">会社・店舗・顧客・家庭・活動など、自分の仕事領域を自由に作れます。</p>
+    ${ws.map((w,i)=>`<div class="mem-item"><span class="mt"><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${w.color};margin-right:7px;vertical-align:middle"></span>${esc(w.name)}</span>
+      <button onclick="renameWorkspace(${DB.workspaces.indexOf(w)})">改名</button><button onclick="deleteWorkspace(${DB.workspaces.indexOf(w)})">削除</button></div>`).join('')}
+    <div class="edit-fld" style="margin-top:14px"><label>新しいワークスペース名</label><input id="newWs" placeholder="例：株式会社○○／○○店／顧客A"></div>
+    <div class="sheet-acts"><button class="ed" onclick="openSettings()">戻る</button><button class="ok" onclick="addWorkspace()">追加する</button></div>`);
+  setTimeout(()=>$('#newWs')&&$('#newWs').focus(),200);
+}
+function addWorkspace(){
+  const v=($('#newWs').value||'').trim(); if(!v){toast('名前を入力してください');return;}
+  if(wsNames().includes(v)){toast('同じ名前があります');return;}
+  const idx=DB.workspaces.filter(w=>w.name!=='未分類').length;
+  DB.workspaces.splice(Math.max(0,DB.workspaces.length-1),0,{name:v,color:PALETTE[idx%PALETTE.length]});
+  save(); openWorkspaces(); toast('追加しました');
+}
+function renameWorkspace(i){
+  const w=DB.workspaces[i]; if(!w)return;
+  openSheet(`<h3>ワークスペースを改名</h3><div class="edit-fld"><input id="wsRename" value="${esc(w.name)}"></div>
+    <div class="sheet-acts"><button class="ed" onclick="openWorkspaces()">戻る</button><button class="ok" onclick="saveRenameWorkspace(${i})">保存</button></div>`);
+  setTimeout(()=>$('#wsRename')&&$('#wsRename').focus(),200);
+}
+function saveRenameWorkspace(i){
+  const w=DB.workspaces[i]; const v=($('#wsRename').value||'').trim(); if(!v){toast('名前を入力してください');return;}
+  const old=w.name; w.name=v;
+  DB.tasks.forEach(t=>{ if(t.ws===old)t.ws=v; }); DB.projects.forEach(p=>{ if(p.ws===old)p.ws=v; }); DB.learned.forEach(l=>{ if(l.ws===old)l.ws=v; });
+  save(); openWorkspaces(); toast('改名しました');
+}
+function deleteWorkspace(i){
+  const w=DB.workspaces[i]; if(!w||w.name==='未分類')return;
+  const used=DB.tasks.filter(t=>t.ws===w.name).length+DB.projects.filter(p=>p.ws===w.name).length;
+  DB.tasks.forEach(t=>{ if(t.ws===w.name)t.ws='未分類'; }); DB.projects.forEach(p=>{ if(p.ws===w.name)p.ws='未分類'; });
+  DB.workspaces.splice(i,1); save(); openWorkspaces(); toast(used?`削除（${used}件は未分類へ）`:'削除しました');
+}
+
+/* =====================================================================
+   オンボーディング（初回設定：サンプル or 自分用）
+   ===================================================================== */
+let onboarding=false;
+function openOnboarding(){
+  onboarding=true;
+  openSheet(`<h3>PILOTへようこそ ✈️</h3>
+    <p class="desc">仕事を預けると、AI秘書が「今やる1件・誰の番か・止まっている仕事」を追いかけます。<br>始め方を選んでください。</p>
+    <button class="opt" onclick="onboardSample()"><span class="oi">🧪</span><span class="ob">サンプルで試す<div class="od">例データ入りで、すぐ操作感を体験</div></span></button>
+    <button class="opt" onclick="onboardCustom()"><span class="oi">🗂️</span><span class="ob">自分用に始める<div class="od">自分の会社・店舗・顧客・家庭などを登録して空から開始</div></span></button>`);
+}
+function onboardSample(){ DB=seed(); mode='normal'; DB.onboarded=true; save(); onboarding=false; afterOnboard(); toast('サンプルで開始しました'); }
+function onboardCustom(){
+  openSheet(`<h3>あなたの仕事領域を登録</h3><p class="desc">分けて管理したい領域を改行で入力（後から追加・変更できます）。</p>
+    <div class="edit-fld"><textarea id="ob_ws" style="min-height:120px" placeholder="例：&#10;株式会社○○&#10;副業（物販）&#10;○○店&#10;家庭"></textarea></div>
+    <div class="set-row"><div><div class="sl">通知の強さ</div></div><div class="segbtns" id="ob_str">
+      ${[['min','最小限'],['std','標準'],['strong','しっかり']].map(o=>`<button class="${o[0]==='std'?'on':''}" data-v="${o[0]}" onclick="document.querySelectorAll('#ob_str button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${o[1]}</button>`).join('')}</div></div>
+    <div class="sheet-acts"><button class="ed" onclick="openOnboarding()">戻る</button><button class="ok" onclick="finishCustom()">この内容で始める</button></div>`);
+  setTimeout(()=>$('#ob_ws')&&$('#ob_ws').focus(),200);
+}
+function finishCustom(){
+  const names=($('#ob_ws').value||'').split('\n').map(x=>x.trim()).filter(Boolean);
+  const list=(names.length?names:['仕事','プライベート']);
+  DB.workspaces=list.map((n,i)=>({name:n,color:PALETTE[i%PALETTE.length]}));
+  DB.workspaces.push({name:'未分類',color:'#8a8f98'});
+  const str=(document.querySelector('#ob_str button.on')||{}).dataset; DB.settings.strength=(str&&str.v)||'std';
+  DB.onboarded=true; mode='normal'; save(); onboarding=false; afterOnboard();
+  toast('準備できました。「預ける」から最初の仕事を話してみてください');
+  setTimeout(()=>go('deposit'),300);
+}
+function afterOnboard(){ const m=MODES[mode]; $('#modeChip').className='mode-chip '+m.cls; $('#modeLabel').textContent=m.label; closeSheetForce(); postInit(); }
+
+/* =====================================================================
+   写真添付（端末内に縮小保存）
+   ===================================================================== */
+let pendingPhoto=null;
+function photoStub(){ const inp=$('#photoInput'); if(inp){ inp.dataset.target='deposit'; inp.click(); } }
+function onPhotoPick(ev){
+  const f=ev.target.files&&ev.target.files[0]; const target=ev.target.dataset.target; ev.target.value='';
+  if(!f)return;
+  downscale(f,640,0.6,dataUrl=>{
+    if(target==='deposit'){ pendingPhoto=dataUrl; $('#depPhoto').innerHTML=`<img src="${dataUrl}" style="max-height:90px;border-radius:10px;margin-top:10px"><div style="font-size:12px;color:var(--muted);margin-top:4px">📎 写真を添付（登録時にひも付け）<button onclick="clearDepPhoto()" style="color:var(--red);font-weight:700;margin-left:8px">外す</button></div>`; toast('写真を添付しました'); }
+    else if(target&&target.startsWith('task:')){ const t=DB.tasks.find(x=>x.id===target.slice(5)); if(t){ t.photo=dataUrl; t.updated=TODAY.toISOString(); save(); openEdit(t.id); toast('写真を更新しました'); } }
+  });
+}
+function clearDepPhoto(){ pendingPhoto=null; $('#depPhoto').innerHTML=''; }
+function downscale(file,max,q,cb){
+  const r=new FileReader(); r.onload=()=>{ const img=new Image(); img.onload=()=>{
+    let{width:w,height:h}=img; if(w>h&&w>max){h=h*max/w;w=max;} else if(h>=w&&h>max){w=w*max/h;h=max;}
+    const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+    try{ cb(c.toDataURL('image/jpeg',q)); }catch(e){ toast('写真を変換できませんでした'); }
+  }; img.onerror=()=>toast('画像を読めませんでした'); img.src=r.result; };
+  r.readAsDataURL(file);
+}
+function attachTaskPhoto(id){ const inp=$('#photoInput'); if(inp){ inp.dataset.target='task:'+id; inp.click(); } }
+function removeTaskPhoto(id){ const t=DB.tasks.find(x=>x.id===id); if(t){ delete t.photo; t.updated=TODAY.toISOString(); save(); openEdit(id); } }
+
+/* =====================================================================
+   SHEET / INIT
+   ===================================================================== */
+function openSheet(html){ $('#sheet').innerHTML=`<div class="grab"></div>`+html; $('#scrim').classList.add('on'); document.body.style.overflow='hidden'; }
+function closeSheet(){ if(onboarding)return; $('#scrim').classList.remove('on'); document.body.style.overflow=''; }
+function closeSheetForce(){ $('#scrim').classList.remove('on'); document.body.style.overflow=''; }
+
+let appTimer=null;
+function startAppTimers(){ if(appTimer)clearInterval(appTimer); appTimer=setInterval(()=>{ syncToday(); nightReviewCheck(); },60000); }
+function postInit(){
+  renderHome(); reentryCheck(); nightReviewCheck(); startAppTimers();
+  if(DB.settings.notify&&typeof Notification!=='undefined'&&Notification.permission==='granted')startNotifyLoop();
+}
+function init(){
+  const m=MODES[mode]; $('#modeChip').className='mode-chip '+m.cls; $('#modeLabel').textContent=m.label;
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){syncToday();if(curView==='home')renderHome();nightReviewCheck();} });
+  if(!DB.onboarded){ openOnboarding(); return; }     // 新規利用者は初回設定へ
+  postInit();
+}
+init();
+window.go=go;
+</script>
+</body>
+</html>
