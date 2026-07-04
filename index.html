@@ -2277,7 +2277,7 @@ function renderCalDay(){
 /* =====================================================================
    Googleカレンダー連携（読み取り＋予定追加）
    ===================================================================== */
-let gToken=null,gTokenExp=0,gTokenClient=null,gAuthCb=null;
+let gToken=null,gTokenExp=0,gTokenClient=null,gAuthCb=null,gClientUsed=null;
 function gcalConfigured(){ return !!(DB.settings.gcalClientId); }
 function gcalConnected(){ return gcalConfigured()&&!!DB.settings.gcalOn; }
 function loadGIS(cb){
@@ -2292,8 +2292,10 @@ function gcalAuth(interactive,cb){
   loadGIS(ok=>{
     if(!ok){cb(false);return;}
     gAuthCb=cb;
+    if(gTokenClient&&gClientUsed!==DB.settings.gcalClientId){ gTokenClient=null; gToken=null; }  // IDが変わったら接続部品を作り直す（重要バグ修正）
     if(!gTokenClient){
       try{
+        gClientUsed=DB.settings.gcalClientId;
         gTokenClient=google.accounts.oauth2.initTokenClient({
           client_id:DB.settings.gcalClientId,
           scope:'https://www.googleapis.com/auth/calendar.events',
@@ -2345,11 +2347,14 @@ function gcalInsert(dateObj,timeHHMM,title,cb){
   });
 }
 function gcalConnect(){
-  const inp=$('#gcalIdInput'); const v=inp?(inp.value||'').trim():'';
+  const inp=$('#gcalIdInput');
+  const v=inp?(inp.value||'').replace(/\s+/g,''):'';   // 改行・空白の混入を除去（コピペ対策）
   if(v)DB.settings.gcalClientId=v;
   if(!DB.settings.gcalClientId){toast('クライアントIDを入力してください');return;}
   save();
-  gcalAuth(true,ok=>{ if(ok){ DB.settings.gcalOn=true; save(); openSettings(); toast('Google連携しました'); gcalSync(true); } else toast('Google認証できませんでした（クライアントIDと承認元の設定を確認）'); });
+  gTokenClient=null; gToken=null;                       // 接続時は必ず今のIDで作り直す（重要バグ修正）
+  gcalAuth(true,ok=>{ if(ok){ DB.settings.gcalOn=true; save(); openSettings(); toast('Google連携しました'); gcalSync(true); }
+    else toast('Google認証できませんでした（使用ID: '+(DB.settings.gcalClientId||'').slice(0,14)+'…）'); });
 }
 function gcalDisconnect(){ DB.settings.gcalOn=false; gToken=null; DB.gcal=[]; save(); openSettings(); toast('Google連携を解除しました'); }
 function openGcalHelp(){
