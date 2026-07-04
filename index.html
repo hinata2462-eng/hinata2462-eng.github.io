@@ -408,6 +408,8 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 .wehalf{min-height:30px;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:3px 6px;display:flex;align-items:center;gap:6px;overflow:hidden;}
 .wehalf.blank{background:transparent;border:none;min-height:0;}
 .wehalf .wed{font-size:10.5px;font-weight:800;flex:none;}
+.wehalf.sat{background:#eef4fd;border-color:#d5e2f7;}
+.wehalf.sun{background:#fdf0f0;border-color:#f3dcdc;}
 .wehalf.sat .wed{color:#4a68c8;} .wehalf.sun .wed{color:#c05050;}
 .wehalf.today{border-color:var(--navy);border-width:2px;}
 .wehalf.sel{background:var(--navy);} .wehalf.sel .wed{color:#fff;}
@@ -465,6 +467,8 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 /* 週表示（読みやすさ最優先のアジェンダ形式） */
 .cal-grid.as-list{display:block;}
 .wk-day{background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding:9px 12px;margin-bottom:8px;}
+.wk-day.wk-sat{background:#f2f7fe;border-color:#d5e2f7;}
+.wk-day.wk-sun{background:#fdf3f3;border-color:#f3dcdc;}
 .wk-day.today{border-color:var(--navy);border-width:2px;}
 .wk-hd{font-size:13px;font-weight:800;color:#3a414c;display:flex;align-items:center;gap:8px;padding-bottom:2px;}
 .wk-today{background:var(--navy);color:#fff;font-size:10px;border-radius:6px;padding:1px 6px;}
@@ -519,7 +523,6 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 <!-- HOME -->
 <section class="view on" id="v-home">
   <div id="summarySlot"></div>
-  <div id="heroSlot" style="margin-top:12px"></div>
   <div class="sec"><span class="bar"></span>やること <span class="ct" id="todayCt"></span></div>
   <div id="todayList"></div>
   <div class="sec" id="projHead"><span class="bar"></span>案件の進捗 <span class="lk" onclick="go('proj')">すべて見る ›</span></div>
@@ -808,7 +811,6 @@ function nextHero(){
 function renderHome(){
   syncToday();
   DB.projects.forEach(recomputeProject);
-  const hero=pickHero();
 
   // ---- サマリー（進捗リング＋フォローチップ＋AI一言） ----
   const doneToday=DB.tasks.filter(t=>t.status==='done'&&daysSince(t.updated)===0).length;
@@ -840,33 +842,8 @@ function renderHome(){
     <div class="sum-chips">${chips.join('')||'<span class="sum-ok">✓ 人からの返事まちはありません</span>'}</div>
   </div>`;
 
-  // ---- 今やること（ヒーロー） ----
-  const slot=$('#heroSlot');
-  if(!hero){
-    slot.innerHTML=`<div class="hero hero-empty"><div class="lab">✓ 今やる仕事はありません</div>
-      <div class="ttl">自分の番の仕事は片付きました</div>
-      <div class="why">📌 返事待ちはAIが追跡しています。新しい仕事は下の🎙️登録ボタンから。</div></div>`;
-  }else{
-    const over=isOverdue(hero.due)&&!hero.dueLabel;
-    slot.innerHTML=`<div class="hero">
-      <div class="lab">👇 まずはこれ <span class="ws">${esc(hero.ws)}</span></div>
-      <div class="ttl" onclick="taskActionSheet('${hero.id}')">${esc(hero.title)}</div>
-      <div class="meta">
-        ${(hero.due||hero.dueLabel)?`<span class="pill ${over?'due':''}">${over?'⚠️ 期限すぎ（'+fmtDueT(hero)+'）':'🕐 '+fmtDueT(hero)+(hero.dueLabel?'':' まで')}</span>`:''}
-        ${hero.mins?`<span class="pill">⏱ 約${hero.mins}分で終わる</span>`:''}
-      </div>
-      ${hero.prog!=null?`<div style="display:flex;align-items:center;gap:8px;margin-top:12px"><div class="bar-track" style="flex:1;height:6px;background:rgba(255,255,255,.2)"><div class="bar-fill" style="width:${hero.prog}%"></div></div><span style="font-size:12px;font-weight:800;color:#cdd8f5">${hero.prog}%</span></div>`:''}
-      ${hero.next?`<div class="why">👉 次にやること：${esc(hero.next)}</div>`:''}
-      ${hero.reason?`<div class="why">💡 ${esc(hero.reason)}</div>`:''}
-      <div class="acts">
-        <button class="start" onclick="completeTask('${hero.id}')">✅ できた！</button>
-        <button class="alt" onclick="nextHero()">あとにする</button>
-        <button class="alt" style="flex:.5" onclick="taskActionSheet('${hero.id}')">…</button>
-      </div></div>`;
-  }
-
   // ---- やること（Todoist風フラットリスト：期限切れ/きょう/これから。色ドット=事業） ----
-  let list=activeTasks().filter(t=>t.ball==='self'&&(t.status==='now'||t.status==='warn')&&(!hero||t.id!==hero.id));
+  let list=activeTasks().filter(t=>t.ball==='self'&&(t.status==='now'||t.status==='warn'));
   const stalledIds=new Set(detectStalls(999).map(s=>s.t.id));
   const byP=(a,b)=>priorityScore(b)-priorityScore(a);
   const secOver=list.filter(t=>isOverdue(t.due)).sort(byP);
@@ -2444,7 +2421,7 @@ function renderWeek(){
     const dt=new Date(start); dt.setDate(start.getDate()+i);
     const items=dayItems(dt);
     const isToday=dayKey(dt)===dayKey(TODAY);
-    html+=`<div class="wk-day ${isToday?'today':''}">
+    html+=`<div class="wk-day ${isToday?'today':''} ${dt.getDay()===6?'wk-sat':dt.getDay()===0?'wk-sun':''}">
       <div class="wk-hd" onclick="calPick('${dt.toISOString()}')">${dt.getMonth()+1}/${dt.getDate()}（<span style="${dt.getDay()===0?'color:#c05050':dt.getDay()===6?'color:#4a68c8':''}">${WD[dt.getDay()]}</span>）${isToday?'<span class="wk-today">きょう</span>':''}<span class="wk-ct">${items.length?items.length+'件':''}</span></div>
       ${items.length?items.map(it=>{
         if(it.kind==='task'){const t=it.task;const c=wsColor(t.ws);return `<div class="wk-it" style="border-color:${c};background:${c}14" onclick="taskActionSheet('${t.id}')"><span class="wk-tm">${it.t}</span><span class="wk-tx">${esc(t.title)}${t.dueLabel?'（'+esc(t.dueLabel)+'）':''}</span></div>`;}
