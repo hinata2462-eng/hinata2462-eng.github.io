@@ -431,6 +431,19 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 .cal-more{font-size:9px;font-weight:800;color:var(--muted);text-align:center;}
 .cal-cell.sel .cal-more{color:#dfe6f5;}
 
+/* フラットな箇条書きリスト（Todoist風：罫線区切り・色ドット・右に期限） */
+.flat{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:2px 13px;}
+.fl-sec{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;color:#5a616c;padding:11px 2px 7px;border-bottom:1px solid #f1f2f4;}
+.fl-sec b{color:var(--muted);}
+.fl-sec.red{color:var(--red);} .fl-sec.red b{color:var(--red);}
+.fl-act{margin-left:auto;color:var(--red);font-weight:800;font-size:12px;}
+.fl-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f1f2f4;}
+.flat > .fl-row:last-child{border-bottom:none;}
+.fl-dot{width:9px;height:9px;border-radius:50%;flex:none;}
+.fl-ttl{flex:1;min-width:0;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;}
+.fl-due{flex:none;font-size:12px;font-weight:700;color:var(--muted);text-align:right;}
+.fl-due.red{color:var(--red);}
+
 /* そっけないタスク一覧（左=内容・右=期限） */
 .trow{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-left:4px solid;border-radius:12px;padding:8px 11px;margin-bottom:6px;box-shadow:var(--shadow);}
 .chk.sm{width:30px;height:30px;font-size:15px;border-width:2px;}
@@ -852,17 +865,25 @@ function renderHome(){
       </div></div>`;
   }
 
-  // ---- やること（そっけない一覧：左=内容・右=期限。優先順はAIが並べ、放置は💤・超過は赤字） ----
+  // ---- やること（Todoist風フラットリスト：期限切れ/きょう/これから。色ドット=事業） ----
   let list=activeTasks().filter(t=>t.ball==='self'&&(t.status==='now'||t.status==='warn')&&(!hero||t.id!==hero.id));
-  list.sort((a,b)=>priorityScore(b)-priorityScore(a));
   const stalledIds=new Set(detectStalls(999).map(s=>s.t.id));
+  const byP=(a,b)=>priorityScore(b)-priorityScore(a);
+  const secOver=list.filter(t=>isOverdue(t.due)).sort(byP);
+  const secToday=list.filter(t=>!isOverdue(t.due)&&t.due&&!t.dueLabel&&fmtDue(t.due).startsWith('今日')).sort(byP);
+  const secLater=list.filter(t=>!secOver.includes(t)&&!secToday.includes(t)).sort(byP);
   const doneRows=DB.tasks.filter(t=>t.status==='done'&&daysSince(t.updated)===0).slice(-3);
   $('#todayCt').textContent=list.length?`${list.length}件`:'';
-  $('#todayList').innerHTML=(list.length?list.map(t=>taskRow(t,stalledIds)).join(''):`<div class="empty">やることは空っぽです 🎉</div>`)
-    +doneRows.map(t=>`<div class="trow" style="border-left-color:${wsColor(t.ws)};opacity:.5">
+  const secHtml=(label,arr,cls,extra)=>arr.length?`<div class="fl-sec ${cls||''}">${label} <b>${arr.length}</b>${extra||''}</div>${arr.map(t=>flRow(t,stalledIds)).join('')}`:'';
+  $('#todayList').innerHTML=(list.length||doneRows.length)?`<div class="flat">
+    ${secHtml('期限切れ',secOver,'red',`<button class="fl-act" onclick="reschedOverdue()">リスケジュール</button>`)}
+    ${secHtml('きょう',secToday)}
+    ${secHtml('これから',secLater)}
+    ${doneRows.length?`<div class="fl-sec">完了</div>`+doneRows.map(t=>`<div class="fl-row" style="opacity:.5">
       <button class="chk sm" onclick="reopenTask('${t.id}')" title="未完了に戻す" style="background:var(--green);border-color:var(--green);color:#fff">✓</button>
-      <div class="t-ttl" style="text-decoration:line-through;color:#9aa0a8">${esc(t.title)}</div>
-      <div class="t-due">完了</div></div>`).join('');
+      <span class="fl-dot" style="background:${wsColor(t.ws)}"></span>
+      <div class="fl-ttl" style="text-decoration:line-through;color:#9aa0a8">${esc(t.title)}</div></div>`).join(''):''}
+  </div>`:`<div class="empty">やることは空っぽです 🎉</div>`;
 
   // ---- 案件の進捗（最大3件・注意が必要な順） ----
   const strip=projStripHTML();
@@ -985,18 +1006,32 @@ function miniRow(t){
 }
 function ballBadge(b){ const x=BALL[b]||BALL.self; return `<span class="ball ${x.cls}">${x.icon} ${x.label}</span>`; }
 
-/* そっけない1行タスク：左=内容・右=期限。AIの気配りは印だけ（💤=放置ぎみ、赤=期限すぎ） */
-function taskRow(t,stalledIds){
-  const over=isOverdue(t.due)&&!t.dueLabel;
+/* フラットな1行タスク：色ドット=事業、右=期限（期限切れは赤い日付）。AIの気配りは💤と並び順 */
+function flRow(t,stalledIds){
+  const over=isOverdue(t.due);
+  let dueTxt='';
+  if(t.dueLabel)dueTxt=t.dueLabel;
+  else if(t.due){ const d=new Date(t.due); dueTxt=over?`${d.getMonth()+1}月${d.getDate()}日`:fmtDue(t.due); }
   const idle=stalledIds&&stalledIds.has(t.id)&&!over;
-  const dueTxt=t.dueLabel?t.dueLabel:(t.due?fmtDue(t.due):'');
-  return `<div class="trow" style="border-left-color:${wsColor(t.ws)}">
+  return `<div class="fl-row">
     <button class="chk sm" onclick="completeTask('${t.id}')">✓</button>
-    <div class="t-ttl" onclick="taskActionSheet('${t.id}')">${idle?'💤 ':''}${esc(t.title)}</div>
-    ${t.prog!=null?`<span class="t-prog">${t.prog}%</span>`:''}
-    ${repeatMark(t)?`<span class="t-rep">🔁</span>`:''}
-    <div class="t-due ${over?'over2':''}">${dueTxt}</div>
+    <span class="fl-dot" style="background:${wsColor(t.ws)}"></span>
+    <div class="fl-ttl" onclick="taskActionSheet('${t.id}')">${idle?'💤 ':''}${esc(t.title)}</div>
+    ${t.prog!=null?`<span class="t-prog">${t.prog}%</span>`:''}${repeatMark(t)?`<span class="t-rep">🔁</span>`:''}
+    <div class="fl-due ${over?'red':''}">${dueTxt}</div>
   </div>`;
+}
+/* 期限切れをまとめて今日へ（Todoistのリスケジュール相当・取り消し可） */
+function reschedOverdue(){
+  const targets=activeTasks().filter(t=>t.ball==='self'&&(t.status==='now'||t.status==='warn')&&isOverdue(t.due));
+  if(!targets.length)return;
+  const snap=targets.map(t=>({id:t.id,due:t.due,dueLabel:t.dueLabel}));
+  let nd=new Date(TODAY); nd.setHours(18,0,0,0);
+  if(nd<=TODAY){ nd=new Date(TODAY.getTime()+2*3600000); if(nd.getDate()!==TODAY.getDate()){ nd=new Date(TODAY); nd.setHours(23,59,0,0); } }
+  targets.forEach(t=>{ t.due=nd.toISOString(); t.dueLabel=null; t.updated=TODAY.toISOString(); });
+  save();
+  toast(`期限切れ ${targets.length}件を今日に移しました`,()=>{ snap.forEach(s=>{ const t=DB.tasks.find(x=>x.id===s.id); if(t){t.due=s.due;t.dueLabel=s.dueLabel;} }); save(); toast('元に戻しました'); refreshCur(); });
+  refreshCur();
 }
 
 function detectStalls(max){
@@ -2364,8 +2399,10 @@ function renderCal(){
   const first=new Date(y,mo,1), last=new Date(y,mo+1,0);
   const start=new Date(first); start.setDate(first.getDate()-((first.getDay()+6)%7));  // 週の頭＝月曜
   let html=''; const dayStats=[];
-  const chip=it=>{const txt=it.kind==='task'?it.task.title:it.ev; const cls=it.kind==='task'?'task':it.kind==='g'?'g':'ev';
-    return `<span class="cal-it ${cls}">${itemEmoji(it)} ${esc(txt)}</span>`;};
+  const chip=it=>{
+    if(it.kind==='task'){ const c=wsColor(it.task.ws);
+      return `<span class="cal-it" style="border-color:${c};background:${c}1f;color:#2c3340">${itemEmoji(it)} ${esc(it.task.title)}</span>`; }
+    return `<span class="cal-it ${it.kind==='g'?'g':'ev'}">${itemEmoji(it)} ${esc(it.ev)}</span>`;};
   for(let ws=new Date(start); ws<=last; ws.setDate(ws.getDate()+7)){
     let wd='', we='';
     for(let i=0;i<7;i++){
@@ -2410,7 +2447,7 @@ function renderWeek(){
     html+=`<div class="wk-day ${isToday?'today':''}">
       <div class="wk-hd" onclick="calPick('${dt.toISOString()}')">${dt.getMonth()+1}/${dt.getDate()}（<span style="${dt.getDay()===0?'color:#c05050':dt.getDay()===6?'color:#4a68c8':''}">${WD[dt.getDay()]}</span>）${isToday?'<span class="wk-today">きょう</span>':''}<span class="wk-ct">${items.length?items.length+'件':''}</span></div>
       ${items.length?items.map(it=>{
-        if(it.kind==='task'){const t=it.task;return `<div class="wk-it task" onclick="taskActionSheet('${t.id}')"><span class="wk-tm">${it.t}</span><span class="wk-tx">${esc(t.title)}${t.dueLabel?'（'+esc(t.dueLabel)+'）':''}</span></div>`;}
+        if(it.kind==='task'){const t=it.task;const c=wsColor(t.ws);return `<div class="wk-it" style="border-color:${c};background:${c}14" onclick="taskActionSheet('${t.id}')"><span class="wk-tm">${it.t}</span><span class="wk-tx">${esc(t.title)}${t.dueLabel?'（'+esc(t.dueLabel)+'）':''}</span></div>`;}
         if(it.kind==='g')return `<div class="wk-it g"><span class="wk-tm">${it.t}</span><span class="wk-tx">${esc(it.ev)}</span></div>`;
         return `<div class="wk-it ev"><span class="wk-tm">${it.t}</span><span class="wk-tx">${esc(it.ev)}</span></div>`;
       }).join(''):'<div class="wk-none">予定なし</div>'}
@@ -2430,7 +2467,7 @@ function renderCalDay(){
     if(it.kind==='g')return `<div class="tl-row tl-ev"><span class="tl-time">${it.t}</span><span class="tl-dot" style="background:#3f8af0"></span><div class="tl-body">${esc(it.ev)}<div class="tl-sub">Googleカレンダー</div></div></div>`;
     return `<div class="tl-row tl-ev"><span class="tl-time">${it.t}</span><span class="tl-dot"></span><div class="tl-body">${esc(it.ev)}</div><span class="tl-del" onclick="delSchedule(${it.idx})">×</span></div>`;
   }).join('')}</div>`:`<div class="empty">この日の予定・期限はありません</div>`)
-  +`<div class="cal-legend"><span>● 予定</span><span style="color:#3f8af0">● Google</span><span style="color:var(--red)">● 仕事の期限</span></div>`;
+  +`<div class="cal-legend"><span>● 灰=予定</span><span style="color:#3f8af0">● 青=Google</span><span>● 仕事＝事業の色（${wsNames().filter(n=>n!=='未分類').slice(0,3).map(n=>`<span style="color:${wsColor(n)}">${esc(n)}</span>`).join('・')}）</span></div>`;
 }
 
 /* =====================================================================
