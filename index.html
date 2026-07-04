@@ -691,6 +691,7 @@ function bootstrapDB(){
 function ensureSettings(d){
   d.settings = Object.assign({notify:true, strength:'std', privacy:'name', morningBrief:true, nightReview:true, workStart:'09:00', workEnd:'18:00', aiModel:'claude-opus-4-8', gcalClientId:'', gcalOn:false, alarm:true}, d.settings||{});
   d.memory=d.memory||[]; d.learned=d.learned||[]; d.notified=d.notified||[]; d.chat=(d.chat||[]).filter(m=>!m.typing); d.gcal=d.gcal||[]; d.snoozes=d.snoozes||[];
+  if(!d.settings.gcalClientId)d.settings.gcalClientId='476865371452-2agstbtq72rvk0h5stfiok582qou70of.apps.googleusercontent.com';  // 既定＝本人のOAuthクライアント（スマホでID貼り付け不要）
   if(!Array.isArray(d.workspaces)||!d.workspaces.length){ d.workspaces=['仕事','プライベート','未分類'].map((n,i)=>({name:n,color:PALETTE[i%PALETTE.length]})); }
   if(!d.workspaces.some(w=>w.name==='未分類'))d.workspaces.push({name:'未分類',color:'#8a8f98'});
   return d;
@@ -742,73 +743,20 @@ function fromLocalInput(v){ if(!v)return null; const d=new Date(v); return isNaN
    ===================================================================== */
 function seed(){
   let id=0; const uid=()=>'t'+(++id);
-  const seedEom=()=>new Date(TODAY.getFullYear(),TODAY.getMonth()+1,0,18,0,0).toISOString();
-  const seedNext25=()=>{let d=new Date(TODAY.getFullYear(),TODAY.getMonth(),25,18,0,0);if(d<TODAY)d=new Date(TODAY.getFullYear(),TODAY.getMonth()+1,25,18,0,0);return d.toISOString();};
-  const seedNextDow=w=>{const d=new Date(TODAY);let f=(w-d.getDay()+7)%7;if(!f)f=7;d.setDate(d.getDate()+f);d.setHours(18,0,0,0);return d.toISOString();};
+  const at=(mo,dd,h,m)=>new Date(TODAY.getFullYear(),mo-1,dd,h==null?18:h,m||0,0).toISOString();
+  // 本人の実タスク（Todoistから移行）。架空のサンプルは撤去済み
   const tasks=[
-    {id:uid(),ws:'三高産業',title:'○○社へ在庫回答',status:'now',ball:'self',next:'在庫数を確認して電話で回答する',due:atTime(0,10,0),mins:5,prio:5,reason:'午後の配送手配に影響します',updated:dPlus(0)},
-    {id:uid(),ws:'三高産業',title:'○○社へ見積を送付',status:'now',ball:'self',next:'見積書PDFをメールで送る',due:atTime(0,17,0),mins:15,prio:4,updated:dPlus(-1)},
-    {id:uid(),ws:'REIKI',title:'PV素材を確認',status:'now',ball:'self',next:'届いた素材を3点チェックする',due:atTime(0,21,0),mins:30,prio:3,updated:dPlus(-1)},
-    {id:uid(),ws:'OLIVE',title:'キャンペーン予約者へ返信',status:'now',ball:'self',next:'予約者3名へLINEで返信',due:atTime(0,19,0),mins:10,prio:3,updated:dPlus(-1)},
-    {id:uid(),ws:'プライベート',title:'家族の予定を確認',status:'now',ball:'self',next:'週末の予定をカレンダーで確認',due:atTime(0,20,0),mins:5,prio:2,updated:dPlus(-1)},
-    // 期限切れ（リスケジュールのデモ用）
-    {id:uid(),ws:'三高産業',title:'仕入先へ支払い処理',status:'now',ball:'self',due:atTime(-1,15,0),prio:4,updated:dPlus(-2)},
-    {id:uid(),ws:'OLIVE',title:'求人原稿の修正',status:'now',ball:'self',due:atTime(-2,18,0),prio:3,updated:dPlus(-3)},
-    // これから（明日〜今週）
-    {id:uid(),ws:'三高産業',title:'発注書の承認',status:'now',ball:'self',due:atTime(1,12,0),prio:3,updated:dPlus(0)},
-    {id:uid(),ws:'プライベート',title:'歯医者の予約を取る',status:'now',ball:'self',due:atTime(1,18,0),mins:5,prio:2,updated:dPlus(0)},
-    {id:uid(),ws:'REIKI',title:'新ラベルデザインの確認',status:'now',ball:'self',due:atTime(2,18,0),prio:3,updated:dPlus(0)},
-    {id:uid(),ws:'三高産業',title:'配送ルートの見直し案',status:'now',ball:'self',due:atTime(6,18,0),prio:3,updated:dPlus(0)},
-    {id:uid(),ws:'OLIVE',title:'秋キャンペーンの企画案',status:'now',ball:'self',due:atTime(8,18,0),prio:3,updated:dPlus(0)},
-    // ざっくり期限・繰り返し
-    {id:uid(),ws:'三高産業',title:'月次報告書をまとめる',status:'now',ball:'self',due:seedEom(),dueLabel:`${TODAY.getMonth()+1}月末`,prio:3,updated:dPlus(0)},
-    {id:uid(),ws:'REIKI',title:'香水の在庫を補充する',status:'now',ball:'self',due:seedEom(),dueLabel:`${TODAY.getMonth()+1}月中`,prio:2,updated:dPlus(0)},
-    {id:uid(),ws:'三高産業',title:'請求書を発行する',status:'now',ball:'self',repeat:'monthly25',repeatDate:25,due:seedNext25(),prio:4,updated:dPlus(0)},
-    {id:uid(),ws:'REIKI',title:'SNS投稿をつくる',status:'now',ball:'self',repeat:'weekly',repeatDay:5,due:seedNextDow(5),prio:2,updated:dPlus(0)},
-    {id:uid(),ws:'三高産業',person:'田中商事 田中さん',title:'在庫確認の回答',status:'wait',ball:'other',next:'回答が来たら発注数を確定',due:dPlus(-1),nextCheck:atTime(-1,15,0),mins:5,prio:4,answer:'none',updated:dPlus(-4),follows:[fday(-13)+' 在庫確認を依頼',fday(-10)+' 1回目の確認',fday(-4)+' 2回目の確認（未回答）']},
-    {id:uid(),ws:'三高産業',person:'山本さん',title:'資材の在庫回答',status:'wait',ball:'other',next:'回答後に発注書を作成',due:atTime(0,15,0),nextCheck:atTime(0,16,0),mins:5,prio:3,answer:'none',updated:dPlus(0),follows:[fday(0)+' 在庫確認を依頼']},
-    {id:uid(),ws:'REIKI',person:'佐藤さん',title:'アトマイザー見積の回答',status:'wait',ball:'other',next:'見積が来たら発注判断',due:dPlus(2),nextCheck:atTime(2,15,0),mins:5,prio:3,answer:'partial',ansOK:['在庫数（在庫あり）'],ansNG:['アトマイザー見積','納期','来週の訪問日時'],updated:dPlus(-2),follows:[fday(-13)+' 見積を依頼',fday(-10)+' 1回目の確認',fday(-7)+' 一部回答（在庫のみ）',fday(-6)+' 納期について追加確認']},
-    {id:uid(),ws:'REIKI',person:'デザイナー 川口さん',title:'AXIVEロゴデータの提出',status:'wait',ball:'team',next:'ロゴ受領後、最終編集に反映',due:dPlus(0),nextCheck:atTime(0,17,0),mins:5,prio:5,answer:'none',updated:dPlus(-3),project:'p_reiki_pv',follows:[fday(-5)+' ロゴデータを依頼',fday(-3)+' 1回目の確認']},
-    {id:uid(),ws:'OLIVE',person:'印刷会社 高橋さん',title:'チラシ増刷の見積',status:'wait',ball:'other',next:'見積が来たら部数を決める',due:dPlus(2),nextCheck:atTime(2,11,0),prio:3,answer:'none',updated:dPlus(-1),follows:[fday(-2)+' 見積を依頼']},
-    {id:uid(),ws:'三高産業',title:'入金確認後に出荷手配',status:'wait',ball:'cond',next:'入金を確認したら出荷を手配',due:dPlus(3),nextCheck:dPlus(3),mins:10,prio:2,answer:'none',updated:dPlus(-1),condText:'○○社からの入金待ち'},
-    {id:uid(),ws:'OLIVE',title:'ホームページ制作を進める',status:'warn',ball:'self',next:'掲載する室内写真を3枚選ぶ',due:null,mins:10,prio:3,updated:dPlus(-5),deferCount:1,project:'p_olive_hp',stallReason:'掲載写真が未決定'},
-    {id:uid(),ws:'三高産業',title:'倉庫の棚卸し表をまとめる',status:'warn',ball:'self',next:null,due:null,mins:null,prio:2,updated:dPlus(-8),deferCount:3,stallReason:'作業が大きく、3回延期されています'},
-    {id:uid(),ws:'REIKI',title:'PV構成を作成',status:'done',ball:'self',next:null,due:dPlus(-3),mins:60,prio:3,updated:dPlus(-3),project:'p_reiki_pv'},
+    {id:uid(),ws:'未分類',title:'顧客管理から広がるロードマップ',status:'now',ball:'self',due:at(6,4),prio:3,updated:TODAY.toISOString()},
+    {id:uid(),ws:'未分類',title:'ファイルとファイルを繋ぐ作り方',status:'now',ball:'self',due:at(6,8),prio:3,updated:TODAY.toISOString()},
+    {id:uid(),ws:'未分類',title:'エンタメ明け',status:'now',ball:'self',due:at(6,15,22,0),prio:3,updated:TODAY.toISOString()},
+    {id:uid(),ws:'未分類',title:'AIで何が出来る様になるのか？？',status:'now',ball:'self',due:at(6,17),prio:3,updated:TODAY.toISOString()},
+    {id:uid(),ws:'プライベート',title:'ここのケータイワイモバイル',status:'now',ball:'self',due:at(7,1,8,0),prio:3,updated:TODAY.toISOString()},
+    {id:uid(),ws:'プライベート',title:'日赤診察',status:'now',ball:'self',due:at(7,1,10,30),prio:3,updated:TODAY.toISOString()},
+    {id:uid(),ws:'プライベート',title:'恵愛堂検査',status:'now',ball:'self',due:at(7,1,20,0),prio:3,updated:TODAY.toISOString()},
+    {id:uid(),ws:'プライベート',title:'榛名花火',status:'now',ball:'self',due:at(7,1),prio:3,updated:TODAY.toISOString()},
   ];
-  const projects=[
-    {id:'p_reiki_pv',ws:'REIKI',name:'REIKI会社PV',blocker:'AXIVEロゴデータが未提出',current:'最終編集',next:'デザイナーへ確認',due:dPlus(17),updated:dPlus(-1),
-      steps:[{n:'構成作成',s:'done'},{n:'キービジュアル作成',s:'done'},{n:'素材収集',s:'prog'},{n:'動画編集',s:'prog'},{n:'ナレーション',s:'todo'},{n:'最終確認',s:'todo'}]},
-    {id:'p_olive_hp',ws:'OLIVE',name:'OLIVEホームページ制作',blocker:'掲載写真が未決定（5日間更新なし）',current:'コンテンツ準備',next:'室内写真を3枚選ぶ',due:dPlus(14),updated:dPlus(-5),
-      steps:[{n:'要件整理',s:'done'},{n:'デザイン案',s:'done'},{n:'写真選定',s:'prog'},{n:'原稿作成',s:'todo'},{n:'コーディング',s:'todo'},{n:'公開',s:'todo'}]},
-    {id:'p_sankou_q3',ws:'三高産業',name:'第3四半期 新商品仕入れ',blocker:null,current:'見積比較',next:'2社の見積を比較表にする',due:dPlus(20),updated:dPlus(0),
-      steps:[{n:'候補リスト作成',s:'done'},{n:'見積依頼',s:'done'},{n:'見積比較',s:'prog'},{n:'社内承認',s:'todo'},{n:'発注',s:'todo'}]},
-  ];
-  const dkey=n=>dayKey(addD(n));
-  const bizKey=n=>{const d=addD(n);while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()+1);return dayKey(d);}; // 仕事系は平日に寄せる
-  const satOff=((6-TODAY.getDay())+7)%7||7, sunOff=((7-TODAY.getDay())%7)||7;
-  const schedule=[
-    {date:dkey(0),t:'10:00',ev:'取引先訪問（○○社）'},
-    {date:dkey(0),t:'14:00',ev:'商品課 打ち合わせ'},
-    {date:dkey(0),t:'19:30',ev:'REIKI 作業（60分）'},
-    {date:bizKey(1),t:'11:00',ev:'銀行で手続き'},
-    {date:bizKey(2),t:'13:00',ev:'△△社と電話商談'},
-    {date:bizKey(3),t:'10:00',ev:'倉庫の視察'},
-    {date:bizKey(4),t:'16:00',ev:'新商品サンプル確認'},
-    {date:dkey(satOff),t:'10:00',ev:'家族で買い出し'},
-    {date:dkey(sunOff),t:'12:00',ev:'親戚と食事'},
-    {date:bizKey(7),t:'09:30',ev:'歯科 定期検診'},
-    {date:bizKey(9),t:'15:00',ev:'OLIVE 店舗ミーティング'},
-    {date:bizKey(11),t:'10:00',ev:'展示会を見学'},
-    {date:bizKey(13),t:'18:00',ev:'同業の交流会'},
-    {date:bizKey(15),t:'11:00',ev:'税理士と面談'},
-    {date:bizKey(18),t:'13:30',ev:'REIKI 撮影日'},
-    {date:bizKey(21),t:'10:00',ev:'学校行事'},
-  ];
-  const memory=['三高産業の仕事は日中を優先','REIKIの制作作業は夜（19:30〜）','家族の予定は原則変更しない','佐藤さんへの確認は電話が多い','PV制作は通常60〜90分必要'];
-  const learned=[{person:'佐藤さん',ws:'REIKI',count:5},{person:'田中商事',ws:'三高産業',count:5},{person:'田中さん',ws:'三高産業',count:3},{person:'川口さん',ws:'REIKI',count:3},{person:'山本さん',ws:'三高産業',count:4}];
-  const workspaces=['三高産業','REIKI','OLIVE','プライベート','未分類'].map((n,i)=>({name:n,color:PALETTE[i%PALETTE.length]}));
-  projects.forEach(recomputeProject);
-  return ensureSettings({version:DB_VERSION,onboarded:true,workspaces,tasks,projects,schedule,memory,learned,notified:[],mode:'normal',lastOpen:TODAY.toISOString(),lastCleanup:null,chat:[]});
+  const workspaces=[...['三高産業','REIKI','OLIVE','プライベート'].map((n,i)=>({name:n,color:PALETTE[i%PALETTE.length]})),{name:'未分類',color:'#8a8f98'}];
+  return ensureSettings({version:DB_VERSION,onboarded:true,workspaces,tasks,projects:[],schedule:[],memory:[],learned:[],notified:[],mode:'normal',lastOpen:TODAY.toISOString(),lastCleanup:null,chat:[]});
 }
 function fday(n){ const d=new Date(TODAY); d.setDate(d.getDate()+n); return `${d.getMonth()+1}/${d.getDate()}`; }
 
@@ -1618,7 +1566,7 @@ function detectWS(s){
   // 1) 利用者が作ったワークスペース名そのものが含まれる（自由作成に対応）
   for(const n of wsNames()){ if(n!=='未分類'&&n.length>=2&&new RegExp(escReg(n),'i').test(s))return n; }
   // 2) サンプル用キーワード（該当ワークスペースが存在する場合のみ／プライベートを先に判定）
-  if(has('プライベート')&&/家族|妻|夫|子供|子ども|娘|息子|学校|旅行|帰省|私用|休み|誕生日|病院|歯医者|参観/.test(s))return 'プライベート';
+  if(has('プライベート')&&/家族|妻|夫|子供|子ども|娘|息子|学校|旅行|帰省|私用|休み|誕生日|病院|歯医者|参観|診察|検査|通院|花火/.test(s))return 'プライベート';
   if(has('三高産業')&&/三高|在庫|配送|商品課|倉庫|棚卸|発注/.test(s))return '三高産業';
   if(has('REIKI')&&/REIKI|レイキ|香水|アトマイザー|PV|動画|AXIVE|Kiki/i.test(s))return 'REIKI';
   if(has('OLIVE')&&/OLIVE|オリーブ|予約|キャンペーン|ホームページ|HP/i.test(s))return 'OLIVE';
@@ -2192,7 +2140,7 @@ function openSettings_html(s,seg,notifyState){
     <div class="edit-fld" style="margin-top:8px"><label>GoogleクライアントID${gcalConfigured()?'（変更時のみ入力）':''}</label>
       <input id="gcalIdInput" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off"></div>
     <div class="segbtns" style="margin-bottom:10px"><button class="on" onclick="gcalConnect()">${gcalConnected()?'再接続':'接続する'}</button></div>
-    <div class="note-box">📅 連携すると、Googleカレンダーの予定が「予定」ページとホームに表示され、PILOTから追加した予定はGoogleに登録されます。<br>初回はGoogle Cloudでの無料設定（10分・PC推奨）が必要です。PCのClaudeに<b>「Google連携の手順を教えて」</b>と聞いてください。</div>
+    <div class="note-box">📅 連携すると、Googleカレンダーの予定が「予定」ページとホームに表示され、PILOTから追加した予定はGoogleに登録されます。<br>IDは入力済みです。<b>「接続する」を押す→Googleアカウントを選ぶ→警告画面は「詳細」→「（安全でないページに）移動」→許可</b>で完了します。</div>
 
     <div class="set-h">ワークスペース</div>
     <div class="set-row"><div><div class="sl">仕事領域を管理</div><div class="sd">${wsNames().filter(n=>n!=='未分類').join('・')||'（未登録）'}</div></div><button class="ftab" onclick="openWorkspaces()">編集</button></div>
@@ -2487,6 +2435,8 @@ function evEmoji(txt){
   return '📌';
 }
 function itemEmoji(it){ return evEmoji(it.kind==='task'?it.task.title:it.ev); }
+/* 予定の色＝内容からワークスペースを推定して事業カラーに（Google/端末の区別はしない） */
+function evWsColor(title){ try{ return wsColor(detectWS(title||'')); }catch(e){ return '#8a8f98'; } }
 function dayItems(d){
   const key=dayKey(d); const items=[];
   (DB.schedule||[]).forEach((s,i)=>{ if(s.date===key)items.push({kind:'ev',t:s.t,st:s.t,ev:s.ev,idx:i}); });
@@ -2514,7 +2464,8 @@ function renderCal(){
   const chip=it=>{
     if(it.kind==='task'){ const c=wsColor(it.task.ws);
       return `<span class="cal-it" style="border-color:${c};background:${c}1f;color:#2c3340">${itemEmoji(it)} ${esc(it.task.title)}</span>`; }
-    return `<span class="cal-it ${it.kind==='g'?'g':'ev'}">${itemEmoji(it)} ${esc(it.ev)}</span>`;};
+    const c=evWsColor(it.ev);
+    return `<span class="cal-it" style="border-color:${c};background:${c}1f;color:#2c3340">${itemEmoji(it)} ${esc(it.ev)}</span>`;};
   for(let ws=new Date(start); ws<=last; ws.setDate(ws.getDate()+7)){
     let wd='', we='';
     for(let i=0;i<7;i++){
@@ -2560,8 +2511,8 @@ function renderWeek(){
       <div class="wk-hd" onclick="calPick('${dt.toISOString()}')">${dt.getMonth()+1}/${dt.getDate()}（<span style="${dt.getDay()===0?'color:#c05050':dt.getDay()===6?'color:#4a68c8':''}">${WD[dt.getDay()]}</span>）${isToday?'<span class="wk-today">きょう</span>':''}<span class="wk-ct">${items.length?items.length+'件':''}</span></div>
       ${items.length?items.map(it=>{
         if(it.kind==='task'){const t=it.task;const c=wsColor(t.ws);return `<div class="wk-it" style="border-color:${c};background:${c}14" onclick="taskActionSheet('${t.id}')"><span class="wk-tm">${it.t}</span><span class="wk-tx">${esc(t.title)}${t.dueLabel?'（'+esc(t.dueLabel)+'）':''}</span></div>`;}
-        if(it.kind==='g')return `<div class="wk-it g"><span class="wk-tm">${it.t}</span><span class="wk-tx">${esc(it.ev)}</span></div>`;
-        return `<div class="wk-it ev"><span class="wk-tm">${it.t}</span><span class="wk-tx">${esc(it.ev)}</span></div>`;
+        const c=evWsColor(it.ev);
+        return `<div class="wk-it" style="border-color:${c};background:${c}14"><span class="wk-tm">${it.t}</span><span class="wk-tx">${esc(it.ev)}</span></div>`;
       }).join(''):'<div class="wk-none">予定なし</div>'}
     </div>`;
   }
@@ -2576,10 +2527,10 @@ function renderCalDay(){
       return `<div class="tl-row"><span class="tl-time ${(isOverdue(t.due)&&!t.dueLabel)?'tl-late':''}">${it.t}</span><span class="tl-dot" style="background:${wsColor(t.ws)}"></span>
         <div class="tl-body" onclick="taskActionSheet('${t.id}')">${esc(t.title)}${t.dueLabel?` <span class="tag wait">${esc(t.dueLabel)}</span>`:''}<div class="tl-sub">${esc(t.ws)}${repeatMark(t)?' ・'+repeatMark(t):''}</div></div>
         <button class="tl-chk" onclick="completeTask('${t.id}');renderCal()">✓</button></div>`; }
-    if(it.kind==='g')return `<div class="tl-row tl-ev"><span class="tl-time">${it.t}</span><span class="tl-dot" style="background:#3f8af0"></span><div class="tl-body">${esc(it.ev)}<div class="tl-sub">Googleカレンダー</div></div></div>`;
-    return `<div class="tl-row tl-ev"><span class="tl-time">${it.t}</span><span class="tl-dot"></span><div class="tl-body">${esc(it.ev)}</div><span class="tl-del" onclick="delSchedule(${it.idx})">×</span></div>`;
+    if(it.kind==='g')return `<div class="tl-row tl-ev"><span class="tl-time">${it.t}</span><span class="tl-dot" style="background:${evWsColor(it.ev)}"></span><div class="tl-body">${esc(it.ev)}<div class="tl-sub">Googleカレンダー</div></div></div>`;
+    return `<div class="tl-row tl-ev"><span class="tl-time">${it.t}</span><span class="tl-dot" style="background:${evWsColor(it.ev)}"></span><div class="tl-body">${esc(it.ev)}</div><span class="tl-del" onclick="delSchedule(${it.idx})">×</span></div>`;
   }).join('')}</div>`:`<div class="empty">この日の予定・期限はありません</div>`)
-  +`<div class="cal-legend"><span>● 灰=予定</span><span style="color:#3f8af0">● 青=Google</span><span>● 仕事＝事業の色（${wsNames().filter(n=>n!=='未分類').slice(0,3).map(n=>`<span style="color:${wsColor(n)}">${esc(n)}</span>`).join('・')}）</span></div>`;
+  +`<div class="cal-legend">${wsNames().filter(n=>n!=='未分類').map(n=>`<span style="color:${wsColor(n)};font-weight:800">● ${esc(n)}</span>`).join('')}<span style="color:#8a8f98">● その他</span></div>`;
 }
 
 /* =====================================================================
