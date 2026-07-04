@@ -385,6 +385,29 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 .clean-banner{width:100%;margin-top:14px;padding:13px;border-radius:13px;background:#eef3fe;border:1px solid #dde7fb;color:var(--blue-d);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;gap:10px;}
 .cb-skip{font-size:11.5px;color:var(--muted);text-decoration:underline;font-weight:700;}
 
+/* ===== 予定ページ（月間カレンダー） ===== */
+.backbar{display:flex;align-items:center;gap:4px;font-size:13.5px;font-weight:800;color:var(--blue-d);padding:10px 4px 2px;}
+.cal-head{display:flex;align-items:center;gap:8px;margin:10px 2px 10px;}
+.cal-nav{width:38px;height:38px;border-radius:11px;background:#fff;border:1px solid var(--line);font-size:19px;font-weight:800;color:#46505e;box-shadow:var(--shadow);flex:none;}
+.cal-title{font-size:17px;font-weight:800;flex:1;text-align:center;}
+.gsync{flex:none;font-size:11.5px;font-weight:800;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 10px;color:#46505e;box-shadow:var(--shadow);}
+.cal-wd{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:0;margin:0 2px 4px;}
+.cal-wd{white-space:normal;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:0 2px;}
+.cal-cell{aspect-ratio:1/1.05;background:var(--card);border:1px solid var(--line);border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px;gap:3px;position:relative;}
+.cal-cell.blank{background:transparent;border:none;box-shadow:none;}
+.cal-cell .d{font-size:13px;font-weight:700;color:#3a414c;line-height:1;}
+.cal-cell.today{border-color:var(--navy);border-width:2px;}
+.cal-cell.today .d{color:var(--navy);font-weight:800;}
+.cal-cell.sel{background:var(--navy);}
+.cal-cell.sel .d{color:#fff;}
+.cal-cell.past{opacity:.55;}
+.cal-dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;max-width:80%;}
+.cal-dot{width:6px;height:6px;border-radius:50%;}
+.cal-dot.ev{background:#8a91a0;} .cal-dot.task{background:var(--red);} .cal-dot.g{background:#3f8af0;}
+.cal-cell .sun{color:#c05050;} .cal-cell .sat{color:#4a68c8;}
+.cal-legend{font-size:11px;color:var(--muted);display:flex;gap:12px;margin:8px 4px 0;}
+
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + var(--safe-b) + 18px);
   background:var(--navy);color:#fff;padding:12px 18px;border-radius:13px;font-size:13.5px;font-weight:700;z-index:80;
   box-shadow:0 10px 30px rgba(14,24,48,.35);opacity:0;pointer-events:none;transition:.25s;max-width:92%;display:flex;align-items:center;gap:6px;}
@@ -443,7 +466,7 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
   <div class="dep-area">
     <textarea id="depText" placeholder="例：佐藤さんにアトマイザーの見積を頼んだ。金曜までに返事がなければ午後に電話する"></textarea>
     <div id="depPhoto"></div>
-    <button class="big-btn" onclick="submitDeposit()">🤖 AIに整理してもらう</button>
+    <button class="big-btn" onclick="submitDeposit()">🤖 整理して登録する</button>
   </div>
   <div class="dep-tools">
     <button onclick="document.getElementById('depText').focus()"><span class="ic">⌨️</span>文字で書く</button>
@@ -455,8 +478,23 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
   </div>
 </section>
 
+<!-- CALENDAR (予定・今月の流れ) -->
+<section class="view" id="v-cal">
+  <div class="cal-head">
+    <button class="cal-nav" onclick="calMove(-1)">‹</button>
+    <div class="cal-title" id="calTitle"></div>
+    <button class="cal-nav" onclick="calMove(1)">›</button>
+    <button class="gsync" id="gsyncBtn" onclick="gcalSync(true)">🔄 Google同期</button>
+  </div>
+  <div class="cal-wd">日月火水木金土</div>
+  <div class="cal-grid" id="calGrid"></div>
+  <div class="sec"><span class="bar"></span><span id="calDayTitle">今日</span> <span class="lk" onclick="addScheduleFor()">＋ 予定を追加</span></div>
+  <div id="calDayList"></div>
+</section>
+
 <!-- FOLLOW -->
 <section class="view" id="v-follow">
+  <button class="backbar" onclick="go('home')">‹ ホームへ戻る</button>
   <div class="sec" style="margin-top:6px"><span class="bar"></span>フォロー（いま誰の番か）</div>
   <div class="ftabs" id="ftabs"></div>
   <div id="followBody"></div>
@@ -464,6 +502,7 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 
 <!-- PROJECTS -->
 <section class="view" id="v-proj">
+  <button class="backbar" onclick="go('home')">‹ ホームへ戻る</button>
   <div class="sec" style="margin-top:6px"><span class="bar"></span>案件（長期・工程管理） <span class="ct" id="projCt"></span></div>
   <div id="projList"></div>
 </section>
@@ -485,9 +524,8 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 
 <nav>
   <button class="on" data-v="home" onclick="go('home')"><span class="ic">🏠</span>ホーム</button>
-  <button data-v="follow" onclick="go('follow')"><span class="ic">🔔</span>フォロー<span class="badge hidden" id="navFollowBadge"></span></button>
   <button class="dep" data-v="deposit" onclick="go('deposit')"><span class="ic">🎙️</span>預ける</button>
-  <button data-v="proj" onclick="go('proj')"><span class="ic">📁</span>案件</button>
+  <button data-v="cal" onclick="go('cal')"><span class="ic">📅</span>予定</button>
   <button data-v="sec" onclick="go('sec')"><span class="ic">💬</span>秘書</button>
 </nav>
 
@@ -502,7 +540,7 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 /* =====================================================================
    PILOT V0.2 — single-file MVP（P0修正版）
    ===================================================================== */
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 let TODAY = new Date();                  // ← 端末の現在日時を使用（固定日付を撤去）
 function syncToday(){ TODAY = new Date(); }
 const $ = s => document.querySelector(s);
@@ -573,8 +611,8 @@ function bootstrapDB(){
   return ensureSettings({version:DB_VERSION,onboarded:false,workspaces,tasks:[],projects:[],schedule:[],memory:[],learned:[],notified:[],mode:'normal',lastOpen:TODAY.toISOString(),lastCleanup:null,chat:[]});
 }
 function ensureSettings(d){
-  d.settings = Object.assign({notify:true, strength:'std', privacy:'name', morningBrief:true, nightReview:true, workStart:'09:00', workEnd:'18:00', aiModel:'claude-opus-4-8'}, d.settings||{});
-  d.memory=d.memory||[]; d.learned=d.learned||[]; d.notified=d.notified||[]; d.chat=(d.chat||[]).filter(m=>!m.typing);
+  d.settings = Object.assign({notify:true, strength:'std', privacy:'name', morningBrief:true, nightReview:true, workStart:'09:00', workEnd:'18:00', aiModel:'claude-opus-4-8', gcalClientId:'', gcalOn:false}, d.settings||{});
+  d.memory=d.memory||[]; d.learned=d.learned||[]; d.notified=d.notified||[]; d.chat=(d.chat||[]).filter(m=>!m.typing); d.gcal=d.gcal||[];
   if(!Array.isArray(d.workspaces)||!d.workspaces.length){ d.workspaces=['仕事','プライベート','未分類'].map((n,i)=>({name:n,color:PALETTE[i%PALETTE.length]})); }
   if(!d.workspaces.some(w=>w.name==='未分類'))d.workspaces.push({name:'未分類',color:'#8a8f98'});
   return d;
@@ -604,6 +642,19 @@ function fmtDue(iso){
 }
 const WD=['日','月','火','水','木','金','土'];
 function fmtFull(d){ return `${d.getMonth()+1}月${d.getDate()}日(${WD[d.getDay()]})`; }
+/* あいまい期限（7月中・月末・月頭）はラベル優先で表示。超過判定は内部の目安日で行う */
+function fmtDueT(t){
+  if(!t)return '期限なし';
+  if(t.dueLabel)return t.dueLabel+(isOverdue(t.due)?'（過ぎています）':'');
+  return fmtDue(t.due);
+}
+function repeatMark(t){
+  if(!t.repeat||t.repeat==='none')return '';
+  if(t.repeat==='weekly'&&t.repeatDay!=null)return `🔁毎週${WD[t.repeatDay]}`;
+  if(t.repeat==='monthly'&&t.repeatDate)return `🔁毎月${t.repeatDate}日`;
+  const l={daily:'毎日',weekdays:'平日',weekly:'毎週',monthly:'毎月',monthly25:'毎月25日',monthend:'毎月末',yearly:'毎年'}[t.repeat];
+  return l?`🔁${l}`:'';
+}
 function toLocalInput(iso){ if(!iso) return ''; const d=new Date(iso); const p=n=>String(n).padStart(2,'0');
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
 function fromLocalInput(v){ if(!v)return null; const d=new Date(v); return isNaN(d)?null:d.toISOString(); }
@@ -660,8 +711,9 @@ function go(v){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   $('#chatBar').classList.toggle('hidden',v!=='sec');
   window.scrollTo({top:0,behavior:'instant'});
-  if(v==='deposit'){ const s=document.querySelector('.deposit-hd .s'); if(s)s.innerHTML=aiEnabled()?'話す・書くだけ。<b>Claude</b>が所属・相手・期限・次にやることを整理します。':'話す・書くだけ。所属・相手・期限・次にやることはAIが整理します。'; }
+  if(v==='deposit'){ const s=document.querySelector('.deposit-hd .s'); if(s)s.innerHTML=aiEnabled()?'話す・書くだけで<b>登録まで自動</b>。Claudeが所属・相手・期限を整理します。':'話す・書くだけで<b>登録まで自動</b>。所属・相手・期限はAIが整理します。'; }
   if(v==='home')renderHome(); if(v==='follow')renderFollow(); if(v==='proj')renderProjects(); if(v==='sec')renderSecretary();
+  if(v==='cal'){ renderCal(); if(gcalConnected()&&Date.now()-(DB.gcalSyncAt||0)>600000)gcalSync(false); }
 }
 function refreshCur(){ if(curView==='home')renderHome();else if(curView==='follow')renderFollow();else if(curView==='proj')renderProjects(); updateBadges(); }
 
@@ -740,13 +792,13 @@ function renderHome(){
       <div class="why">📌 返事待ちはAIが追跡しています。新しい仕事は「預ける」から登録できます。</div></div>`;
   }else{
     const reasons=[];
-    if(isOverdue(hero.due))reasons.push('期限を過ぎています');else if(hero.due)reasons.push(`期限が ${fmtDue(hero.due)}`);
+    if(isOverdue(hero.due)&&!hero.dueLabel)reasons.push('期限を過ぎています');else if(hero.due||hero.dueLabel)reasons.push(`期限が ${fmtDueT(hero)}`);
     if(hero.reason)reasons.push(hero.reason); if(hero.mins)reasons.push(`${hero.mins}分で完了できます`);
     slot.innerHTML=`<div class="hero">
       <div class="lab">⚡ 今やること <span class="ws">${esc(hero.ws)}</span></div>
       <div class="ttl" onclick="taskActionSheet('${hero.id}')">${esc(hero.title)}</div>
       <div class="meta">
-        ${hero.due?`<span class="pill ${isOverdue(hero.due)?'due':''}">🕐 ${fmtDue(hero.due)}</span>`:''}
+        ${(hero.due||hero.dueLabel)?`<span class="pill ${(isOverdue(hero.due)&&!hero.dueLabel)?'due':''}">🕐 ${fmtDueT(hero)}</span>`:''}
         ${hero.mins?`<span class="pill">⏱ 約${hero.mins}分</span>`:''}
         <span class="pill">📋 残り${selfNow.length}件</span>
       </div>
@@ -763,7 +815,7 @@ function renderHome(){
   $('#timelineSlot').innerHTML=timelineHTML(hero);
 
   // ---- 今日中にやる（時刻なし）＋今日完了した仕事（減光） ----
-  let untimed=activeTasks().filter(t=>t.ball==='self'&&t.status==='now'&&!(t.due&&fmtDue(t.due).startsWith('今日'))&&(!hero||t.id!==hero.id));
+  let untimed=activeTasks().filter(t=>t.ball==='self'&&t.status==='now'&&!(t.due&&!t.dueLabel&&fmtDue(t.due).startsWith('今日'))&&(!hero||t.id!==hero.id));
   untimed.sort((a,b)=>priorityScore(b)-priorityScore(a)); untimed=untimed.slice(0,5);
   const doneRows=DB.tasks.filter(t=>t.status==='done'&&daysSince(t.updated)===0).slice(-3);
   $('#todayCt').textContent=untimed.length?`${untimed.length}件`:'';
@@ -810,7 +862,8 @@ const p2=n=>String(n).padStart(2,'0');
 function timelineHTML(hero){
   const items=[];
   (DB.schedule||[]).forEach((s,i)=>{ if(s.date===dayKey(TODAY))items.push({t:s.t,kind:'ev',ev:s.ev,idx:i}); });
-  activeTasks().filter(t=>t.ball==='self'&&t.due&&fmtDue(t.due).startsWith('今日')).forEach(t=>{
+  (DB.gcal||[]).forEach(g=>{ if(g.date===dayKey(TODAY))items.push({t:g.t==='終日'?'00:01':g.t,disp:g.t,kind:'gev',ev:g.ev}); });
+  activeTasks().filter(t=>t.ball==='self'&&t.due&&!t.dueLabel&&fmtDue(t.due).startsWith('今日')).forEach(t=>{
     const d=new Date(t.due); items.push({t:`${p2(d.getHours())}:${p2(d.getMinutes())}`,kind:'task',task:t});
   });
   items.sort((a,b)=>a.t.localeCompare(b.t));
@@ -821,6 +874,8 @@ function timelineHTML(hero){
     if(!nowIn&&it.t>nowT){ html+=nowLine; nowIn=true; }
     if(it.kind==='ev'){
       html+=`<div class="tl-row tl-ev ${it.t<nowT?'tl-past':''}"><span class="tl-time">${it.t}</span><span class="tl-dot"></span><div class="tl-body">${esc(it.ev)}</div><span class="tl-del" onclick="delSchedule(${it.idx})">×</span></div>`;
+    }else if(it.kind==='gev'){
+      html+=`<div class="tl-row tl-ev ${(it.disp!=='終日'&&it.t<nowT)?'tl-past':''}"><span class="tl-time">${it.disp}</span><span class="tl-dot" style="background:#3f8af0"></span><div class="tl-body">${esc(it.ev)}<div class="tl-sub">Googleカレンダー</div></div></div>`;
     }else{
       const t=it.task,over=isOverdue(t.due);
       html+=`<div class="tl-row"><span class="tl-time ${over?'tl-late':''}">${it.t}</span><span class="tl-dot" style="background:${wsColor(t.ws)}"></span>
@@ -857,7 +912,7 @@ function reopenTask(id){
 function taskActionSheet(id){
   const t=DB.tasks.find(x=>x.id===id); if(!t)return;
   openSheet(`<h3>${esc(t.title)}</h3>
-    <p class="desc">${esc(t.ws)} ／ ${t.due?'期限 '+fmtDue(t.due):'期限なし'}${t.person?' ／ '+esc(t.person):''}</p>
+    <p class="desc">${esc(t.ws)} ／ ${(t.due||t.dueLabel)?'期限 '+fmtDueT(t):'期限なし'}${repeatMark(t)?' ／ '+repeatMark(t):''}${t.person?' ／ '+esc(t.person):''}</p>
     ${t.next?`<div class="next" style="margin-bottom:12px">👉 <b>次にやること</b>：${esc(t.next)}</div>`:''}
     <button class="opt" onclick="completeTask('${t.id}');closeSheet()"><span class="oi">✅</span><span class="ob">完了した</span></button>
     <button class="opt" onclick="moveTomorrow('${t.id}')"><span class="oi">⏰</span><span class="ob">明日へ移す</span></button>
@@ -867,7 +922,7 @@ function taskActionSheet(id){
 function moveTomorrow(id){
   const t=DB.tasks.find(x=>x.id===id); if(!t)return;
   const nd=addD(1); if(t.due){const o=new Date(t.due);nd.setHours(o.getHours(),o.getMinutes(),0,0);}else nd.setHours(18,0,0,0);
-  t.due=nd.toISOString(); t.deferCount=(t.deferCount||0)+1; t.updated=TODAY.toISOString();
+  t.due=nd.toISOString(); t.dueLabel=null; t.deferCount=(t.deferCount||0)+1; t.updated=TODAY.toISOString();
   save(); closeSheet(); toast('明日へ移しました'); refreshCur();
 }
 function openStallSheet(id){
@@ -881,7 +936,7 @@ function miniRow(t){
     <div class="m-body" onclick="taskActionSheet('${t.id}')">
       <div class="m-ttl">${esc(t.title)}${t.photo?' 📎':''}</div>
       <div class="m-sub"><span class="ws" style="color:${wsColor(t.ws)}">${esc(t.ws)}</span>
-        ${t.due?`<span>🕐 ${fmtDue(t.due)}</span>`:''}${t.mins?`<span>⏱${t.mins}分</span>`:''}${ballBadge(t.ball)}</div>
+        ${(t.due||t.dueLabel)?`<span>🕐 ${fmtDueT(t)}</span>`:''}${repeatMark(t)?`<span>${repeatMark(t)}</span>`:''}${t.mins?`<span>⏱${t.mins}分</span>`:''}${ballBadge(t.ball)}</div>
       ${t.next?`<div class="next">👉 <b>次にやること</b>：${esc(t.next)}</div>`:''}
     </div>
     <span class="m-edit" onclick="openEdit('${t.id}')">✎</span>
@@ -961,8 +1016,11 @@ function nextRepeatDue(t){
   switch(t.repeat){
     case 'daily': d.setDate(d.getDate()+1); break;
     case 'weekdays': do{d.setDate(d.getDate()+1);}while(d.getDay()===0||d.getDay()===6); break;
-    case 'weekly': d.setDate(d.getDate()+7); break;
-    case 'monthly': d.setMonth(d.getMonth()+1); break;
+    case 'weekly': d.setDate(d.getDate()+7); if(t.repeatDay!=null){while(d.getDay()!==t.repeatDay)d.setDate(d.getDate()+1);} break;
+    case 'monthly':
+      if(t.repeatDate){ d.setMonth(d.getMonth()+1,1); d.setDate(Math.min(t.repeatDate,new Date(d.getFullYear(),d.getMonth()+1,0).getDate())); }
+      else d.setMonth(d.getMonth()+1);
+      break;
     case 'monthly25': d.setMonth(d.getMonth()+1,25); break;
     case 'monthend': d.setMonth(d.getMonth()+2,0); break;
     case 'yearly': d.setFullYear(d.getFullYear()+1); break;
@@ -1081,7 +1139,9 @@ function saveEdit(id){
   t.title=$('#e_title').value.trim()||t.title;
   t.ws=$('#e_ws').value; t.status=$('#e_status').value; t.ball=$('#e_ball').value;
   t.person=$('#e_person').value.trim()||null;
-  t.due=fromLocalInput($('#e_due').value); t.nextCheck=fromLocalInput($('#e_check').value);
+  const newDue=fromLocalInput($('#e_due').value);
+  if(newDue!==t.due)t.dueLabel=null;             // 期限を具体日時に直したら「7月中」等のラベルは外す
+  t.due=newDue; t.nextCheck=fromLocalInput($('#e_check').value);
   t.next=$('#e_next').value.trim()||null;
   const mn=parseInt($('#e_mins').value,10); t.mins=isNaN(mn)?null:mn;
   t.repeat=$('#e_repeat').value;
@@ -1145,17 +1205,21 @@ function aiErrMsg(e){
 const NS={anyOf:[{type:'string'},{type:'null'}]};
 const TASKS_SCHEMA={type:'object',additionalProperties:false,required:['tasks'],properties:{
   tasks:{type:'array',items:{type:'object',additionalProperties:false,
-    required:['title','ws','person','ball','due','nextCheck','next','mins','prio','repeat'],
+    required:['title','ws','person','ball','due','dueLabel','nextCheck','next','mins','prio','repeat','repeatDay','repeatDate'],
     properties:{
       title:{type:'string',description:'簡潔なタイトル（日付・「まで」を含めない）'},
       ws:{type:'string',description:'所属ワークスペース名'},
       person:NS,
       ball:{type:'string',enum:['self','other','team','cond','unknown'],description:'誰の番か'},
-      due:NS, nextCheck:NS,
+      due:NS,
+      dueLabel:NS,
+      nextCheck:NS,
       next:NS,
-      mins:{anyOf:[{type:'integer'},{type:'null'}]},
+      mins:{anyOf:[{type:'integer'},{type:'null'}],description:'ユーザーが所要時間を明言したときだけ。それ以外null'},
       prio:{type:'integer',enum:[1,2,3,4,5]},
-      repeat:{type:'string',enum:['none','daily','weekdays','weekly','monthly','monthly25','monthend','yearly']}
+      repeat:{type:'string',enum:['none','daily','weekdays','weekly','monthly','monthly25','monthend','yearly']},
+      repeatDay:{anyOf:[{type:'integer'},{type:'null'}],description:'毎週の曜日 0=日〜6=土'},
+      repeatDate:{anyOf:[{type:'integer'},{type:'null'}],description:'毎月の日 1〜31'}
     }}}
 }};
 const CHAT_SCHEMA={type:'object',additionalProperties:false,required:['reply','actions'],properties:{
@@ -1182,8 +1246,9 @@ function aiSystemForParse(){
 - デザイナー・社内・外注・チームへの依頼 → ball=team。入金/納品/到着/入荷待ち → ball=cond。自分の作業 → ball=self。担当が不明 → unknown。
 - 「金曜までに返事がなければ電話」型は2件に分ける：送る作業(self)＋返事の確認(other, nextCheck=その日時, next="返事がなければ電話する")。
 - due/nextCheckは "YYYY-MM-DDTHH:mm" のローカル時刻。時刻の指定がなければ18:00。「午前中」=12:00、「朝」=9:00、「夕方」=17:00、「夜」=19:00。日付が読み取れなければnull。
-- nextは次にやる具体的な一手を短く。minsは推定所要分。prioは1〜5（5=顧客・納期・金銭に関わる）。
-- repeatは「毎日/平日/毎週/毎月/毎月25日/毎月末/毎年」の指定があるときだけ。それ以外はnone。`;
+- ざっくり期限: 「7月中」→dueはその月の末日18:00・dueLabelに"7月中"。「月末」→末日・dueLabel"7月末"。「月頭/月初/上旬」→その月の5日・dueLabel"7月あたま"。具体的な日付のときはdueLabelはnull。
+- 繰り返し: 「毎週月曜」→repeat=weekly, repeatDay=1(0=日〜6=土)。「毎月10日」→repeat=monthly, repeatDate=10。「毎月25日」→repeat=monthly25。dueには直近の実施日を入れる。指定がなければrepeat=none, repeatDay/repeatDate=null。
+- nextは次にやる具体的な一手を短く。minsは「30分で」など所要時間を明言したときだけ数値、それ以外はnull。prioは1〜5（5=顧客・納期・金銭に関わる）。`;
 }
 async function aiParse(raw){
   const resp=await aiCall({
@@ -1205,9 +1270,12 @@ function aiMapTasks(data, raw){
     const dup=findDuplicate(title,t.person||null);
     return {title,ws,person:t.person||null,ball,
       status:ball==='self'?'now':'wait',
-      due,nextCheck:ball==='self'?(t.nextCheck?fromLocalInput(t.nextCheck):null):nextCheck,
+      due,dueLabel:t.dueLabel||null,
+      nextCheck:ball==='self'?(t.nextCheck?fromLocalInput(t.nextCheck):null):nextCheck,
       next:t.next||null,
       repeat:REPEAT_OPTS.some(r=>r[0]===t.repeat)?t.repeat:'none',
+      repeatDay:(t.repeatDay!=null&&t.repeatDay>=0&&t.repeatDay<=6)?t.repeatDay:null,
+      repeatDate:(t.repeatDate&&t.repeatDate>=1&&t.repeatDate<=31)?t.repeatDate:null,
       mins:t.mins||null,prio:Math.min(5,Math.max(1,t.prio||3)),
       conf:{ws:'hi',person:t.person?'hi':'lo',due:due?'hi':'lo',ball:'hi'},
       dup:dup?dup.title:null};
@@ -1257,7 +1325,7 @@ function applyAIActions(actions){
     if(!t){ done.push(`⚠️「${q}」が見つかりませんでした`); return; }
     const d=a.date?fromLocalInput(a.date):null;
     switch(a.type){
-      case 'move_due': if(d){t.due=d;t.updated=TODAY.toISOString();done.push(`✓「${t.title}」の期限を${fmtDue(d)}へ`);} break;
+      case 'move_due': if(d){t.due=d;t.dueLabel=null;t.updated=TODAY.toISOString();done.push(`✓「${t.title}」の期限を${fmtDue(d)}へ`);} break;
       case 'set_next_check': if(d){t.nextCheck=d;t.updated=TODAY.toISOString();done.push(`✓「${t.title}」の次回確認を${fmtDue(d)}へ`);} break;
       case 'complete': completeTask(t.id); done.push(`✓「${t.title}」を完了`); break;
       case 'hold': t.status='hold'; t.updated=TODAY.toISOString(); done.push(`✓「${t.title}」を保留`); break;
@@ -1279,7 +1347,7 @@ async function testAI(){
 function setDepBusy(b){
   const btn=document.querySelector('#v-deposit .big-btn'); if(!btn)return;
   btn.disabled=b; btn.style.opacity=b?'.65':'1';
-  btn.textContent=b?'🤖 Claudeが整理中…':'🤖 AIに整理してもらう';
+  btn.textContent=b?'🤖 Claudeが整理中…':'🤖 整理して登録する';
 }
 
 /* =====================================================================
@@ -1296,7 +1364,8 @@ function toggleMic(){
   circle.classList.add('rec'); cap.textContent='聞いています…（もう一度タップで停止）';
   recog.onresult=e=>{let txt='';for(let i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;$('#depText').value=(base?base+' ':'')+txt;};
   recog.onerror=()=>{};
-  recog.onend=()=>{circle.classList.remove('rec');cap.textContent='タップして話す';recog=null;if($('#depText').value.trim())toast('整理するには下のボタンを押してください');};
+  recog.onend=()=>{circle.classList.remove('rec');cap.textContent='タップして話す';recog=null;
+    if($('#depText').value.trim())submitDeposit();};   // 話し終えたら自動で整理→登録まで実行
   recog.start();
 }
 function quickEgs(){
@@ -1349,6 +1418,53 @@ function detectDue(s){
   if(!day)return null;
   const out=new Date(day); out.setHours(hour!=null?hour:18, hour!=null?min:0, 0,0); return out.toISOString();
 }
+/* ざっくり期限：「7月中」「月頭・月初・上旬」「月末」→ 目安日＋表示ラベル */
+function monthBase(rel,num){
+  const d=new Date(TODAY); d.setHours(0,0,0,0);
+  if(num){ const mo=num-1; let y=d.getFullYear();
+    const end=new Date(y,mo+1,0); if(end<startOfDay(TODAY))y++;   // 過ぎた月なら来年
+    return new Date(y,mo,1); }
+  const off=rel==='再来月'?2:rel==='来月'?1:0;
+  return new Date(d.getFullYear(),d.getMonth()+off,1);
+}
+function detectDueEx(s){
+  let m=s.match(/(?:(再来月|来月|今月)|(\d{1,2})月)(?:中|いっぱい)(?![旬])/);
+  if(m){ const b=monthBase(m[1],m[2]?+m[2]:null); const d=new Date(b.getFullYear(),b.getMonth()+1,0,18,0,0);
+    return {due:d.toISOString(), label:`${d.getMonth()+1}月中`}; }
+  const h1=s.match(/(再来月|来月|今月)(?:の)?(?:頭|あたま|初め|月頭|月初|上旬)/);
+  const h2=!h1&&s.match(/(\d{1,2})月(?:の)?(?:頭|あたま|初め|月初|上旬)/);
+  const h3=!h1&&!h2&&/月頭|月初|上旬/.test(s);
+  if(h1||h2||h3){
+    let b;
+    if(h1)b=monthBase(h1[1],null);
+    else if(h2)b=monthBase(null,+h2[1]);
+    else { b=monthBase('今月',null); if(TODAY.getDate()>7)b=new Date(b.getFullYear(),b.getMonth()+1,1); } // ただの「月頭」で今月がもう中旬なら来月
+    const d=new Date(b.getFullYear(),b.getMonth(),5,18,0,0);
+    return {due:d.toISOString(), label:`${d.getMonth()+1}月あたま`}; }
+  m=s.match(/(\d{1,2})月末/)||s.match(/(?:(再来月|来月|今月))?月末/);
+  if(m&&/月末/.test(s)){
+    const num=/^\d/.test(m[1]||'')?+m[1]:null;
+    const rel=num?null:(m[1]||'今月');
+    const b=monthBase(rel,num);
+    let d=new Date(b.getFullYear(),b.getMonth()+1,0,18,0,0);
+    if(!num&&rel==='今月'&&d<TODAY)d=new Date(b.getFullYear(),b.getMonth()+2,0,18,0,0);
+    return {due:d.toISOString(), label:`${d.getMonth()+1}月末`}; }
+  const plain=detectDue(s);
+  return plain?{due:plain,label:null}:{due:null,label:null};
+}
+/* 繰り返し：「毎週月曜」「毎月10日」も拾う */
+function detectRepeatEx(s){
+  let m=s.match(/毎週([日月火水木金土])/); if(m)return {repeat:'weekly',repeatDay:WEEK[m[1]]};
+  m=s.match(/毎月(\d{1,2})日/); if(m){ const d=+m[1]; return d===25?{repeat:'monthly25'}:{repeat:'monthly',repeatDate:d}; }
+  return {repeat:detectRepeat(s)};
+}
+function nextOccur(rep){
+  // repeatDay/repeatDateから直近の実施日を出す（登録時の初期期限用）
+  const d=new Date(TODAY); d.setHours(18,0,0,0);
+  if(rep.repeat==='weekly'&&rep.repeatDay!=null){ let diff=(rep.repeatDay-d.getDay()+7)%7; if(diff===0&&TODAY.getHours()>=18)diff=7; d.setDate(d.getDate()+diff); return d.toISOString(); }
+  if(rep.repeat==='monthly'&&rep.repeatDate){ let t=new Date(d.getFullYear(),d.getMonth(),Math.min(rep.repeatDate,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()),18,0,0); if(t<TODAY)t=new Date(d.getFullYear(),d.getMonth()+1,Math.min(rep.repeatDate,new Date(d.getFullYear(),d.getMonth()+2,0).getDate()),18,0,0); return t.toISOString(); }
+  return null;
+}
 function parseFollowup(s){ const m=s.match(FUP); if(!m)return null; return detectDue(s.slice(m.index))||detectDue(s); }
 
 function detectWS(s){
@@ -1400,6 +1516,8 @@ function detectNext(s,ball){
 function cleanTitle(s){
   let t=s.split('。')[0].trim();
   const fm=t.match(FUP); if(fm)t=t.slice(0,fm.index);
+  t=t.replace(/毎週[日月火水木金土]曜日?|毎月\d{1,2}日/g,'');       // 具体的な繰り返し指定を先に除去
+  t=t.replace(/(\d{1,2}月|今月|来月|再来月)(の)?(中|いっぱい|頭|あたま|初め)|月頭|月初|上旬/g,''); // ざっくり期限語
   t=t.replace(DATE_RE,'');
   t=t.replace(/(毎日|毎週|毎月末?|毎年|平日)/g,'');                 // 繰り返し語は別管理なのでタイトルから除去
   t=t.replace(/^(それと|あと|また|そして)[、\s]*/,'');
@@ -1464,15 +1582,30 @@ function analyzeOne(chunk,full,solo){
   let wsConf=detectWS(chunk)!=='未分類'?'hi':(ws!=='未分類'?'mid':'lo');
   // 学習の反映：キーワードで決まらないとき、相手→所属の記憶を使う（使うほど精度が上がる）
   if(ws==='未分類'){ const lws=learnedWS(person); if(lws){ ws=lws; wsConf='hi'; } }
-  const ball=detectBall(chunk); const due=detectDue(chunk); const next=detectNext(chunk,ball);
+  const ball=detectBall(chunk);
+  const dx=detectDueEx(chunk); const rep=detectRepeatEx(chunk);
+  let due=dx.due, dueLabel=dx.label;
+  if(!due&&rep.repeat!=='none'){ due=nextOccur(rep); }          // 「毎週月曜に◯◯」→次の月曜を初期期限に
+  const next=detectNext(chunk,ball);
   const nextCheck=(ball==='other'||ball==='team'||ball==='cond')?(parseFollowup(chunk)||due||dPlus(2)):null;
   const title=cleanTitle(chunk);
   const dup=findDuplicate(title,person);
   const conf={ws:wsConf,person:person?'hi':'lo',due:due?'hi':'lo',ball:'hi'};
-  return {title,ws,person,ball,status:ball==='self'?'now':'wait',due,nextCheck,next,repeat:detectRepeat(chunk),
+  return {title,ws,person,ball,status:ball==='self'?'now':'wait',due,dueLabel,nextCheck,next,
+    repeat:rep.repeat,repeatDay:rep.repeatDay!=null?rep.repeatDay:null,repeatDate:rep.repeatDate||null,
     mins:estMins(chunk),prio:estPrio(chunk,due),conf,dup:dup?dup.title:null};
 }
-function estMins(s){ if(/電話|返信|LINE|連絡|確認|渡/.test(s))return 5; if(/見積|資料|まとめ|作成|書類/.test(s))return 15; if(/編集|制作|PV|動画|完成/.test(s))return 60; return 10; }
+/* 所要時間は自動推定しない。「30分で」など明示されたときだけ拾う（時刻の「10時30分」は除外） */
+function estMins(s){
+  const re=/(\d{1,3})\s*分/g; let m;
+  while((m=re.exec(s))!==null){
+    const before=s.slice(Math.max(0,m.index-4),m.index);
+    if(/時\s*$/.test(before))continue;          // 「◯時30分」の分は時刻
+    return +m[1];
+  }
+  if(/(\d{1,2})\s*時間/.test(s))return +RegExp.$1*60;
+  return null;
+}
 function estPrio(s,due){ let p=3; if(/配送|入金|納品|至急|急ぎ|なるべく早く|顧客|お客/.test(s))p=5; else if(isOverdue(due))p=4; else if(/家族|私用/.test(s))p=2; return p; }
 
 let pendingParse=[];
@@ -1481,76 +1614,72 @@ function ruleParse(raw){
   let tasks=[]; chunks.forEach(c=>{tasks=tasks.concat(expand(c,raw,solo));});
   return tasks;
 }
+let depBusyNow=false;
 async function submitDeposit(){
+  if(depBusyNow)return;                       // 連打・二重登録防止
   const raw=$('#depText').value.trim();
   if(!raw){toast('内容を話すか入力してください');$('#depText').focus();return;}
+  depBusyNow=true;
   if(aiEnabled()){
     setDepBusy(true);
     try{
-      pendingParse=await aiParse(raw);
-      setDepBusy(false);
-      if(pendingParse.length){ showParseSheet(raw,true); return; }
+      const list=await aiParse(raw);
+      setDepBusy(false); depBusyNow=false;
+      if(list.length){ showRegisteredSheet(registerParsed(list),true); return; }
       toast('Claudeが仕事を見つけられませんでした。ルール解析で続行します');
     }catch(e){
-      setDepBusy(false);
+      setDepBusy(false); depBusyNow=false;
       toast('Claude接続に失敗（'+aiErrMsg(e)+'）→ ルール解析で続行');
     }
   }
-  pendingParse=ruleParse(raw);
-  showParseSheet(raw,false);
+  depBusyNow=false;
+  const list=ruleParse(raw);
+  showRegisteredSheet(registerParsed(list),false);
 }
-function showParseSheet(raw,byAI){
-  const multi=pendingParse.length>1;
-  openSheet(`<h3>${byAI?'🤖 Claudeが整理しました':'🤖 AIが整理しました'+(getApiKey()?'（ルール解析）':'')}</h3>
-    <p class="desc">「${esc(raw.length>54?raw.slice(0,54)+'…':raw)}」</p>
-    ${multi?`<div class="multi-note">📋 ${pendingParse.length}件の仕事として登録します</div>`:''}
-    ${pendingParse.map((p,i)=>parseCard(p,i)).join('')}
-    <div class="sheet-acts"><button class="ed" onclick="closeSheet()">やめる</button>
-      <button class="ok" onclick="confirmDeposit()">${multi?'まとめて登録':'登録する'}</button></div>
-    <p class="desc" style="text-align:center;margin-top:10px">期限・次回確認も含め、違う項目だけ直して登録できます。</p>`);
-}
-function parseCard(p,i){
-  const wsOpts=wsOptions(p.ws);
-  const ballOpts=Object.entries(BALL).map(([k,v])=>`<option value="${k}" ${k===p.ball?'selected':''}>${v.label}</option>`).join('');
-  const confTag=c=>`<span class="conf ${c}">${c==='hi'?'確信◎':c==='mid'?'要確認':'推測'}</span>`;
-  const repOpts=REPEAT_OPTS.map(([k,l])=>`<option value="${k}" ${k===(p.repeat||'none')?'selected':''}>${l}</option>`).join('');
-  return `<div class="pr" data-i="${i}">
-    ${pendingParse.length>1?`<div class="fld"><span class="fk">${i+1}件目</span><span class="fv">${esc(p.title)}</span></div>`:''}
-    ${p.dup?`<div class="fld" style="background:var(--amber-bg);border-radius:9px"><span class="fk" style="color:var(--amber)">⚠️重複</span><span class="fv" style="color:var(--amber);font-size:13px">「${esc(p.dup)}」に似ています。重複なら下の「やめる」で中止できます</span></div>`:''}
-    <div class="fld"><span class="fk">内容</span><span class="fv"><input data-f="title" value="${esc(p.title)}"></span></div>
-    <div class="fld"><span class="fk">所属</span><span class="fv"><select data-f="ws">${wsOpts}</select></span>${confTag(p.conf.ws)}</div>
-    <div class="fld"><span class="fk">相手</span><span class="fv"><input data-f="person" value="${esc(p.person||'')}" placeholder="（なし）"></span>${confTag(p.conf.person)}</div>
-    <div class="fld"><span class="fk">誰の番</span><span class="fv"><select data-f="ball">${ballOpts}</select></span></div>
-    <div class="fld"><span class="fk">期限</span><span class="fv"><input type="datetime-local" data-f="due" value="${toLocalInput(p.due)}"></span>${confTag(p.conf.due)}</div>
-    <div class="fld"><span class="fk">次回確認</span><span class="fv"><input type="datetime-local" data-f="nextCheck" value="${toLocalInput(p.nextCheck)}"></span></div>
-    <div class="fld"><span class="fk">次にやること</span><span class="fv"><input data-f="next" value="${esc(p.next||'')}" placeholder="（AIが提案）"></span></div>
-    <div class="fld"><span class="fk">繰り返し</span><span class="fv"><select data-f="repeat">${repOpts}</select></span></div>
-  </div>`;
-}
-const REPEAT_OPTS=[['none','なし（1回）'],['daily','毎日'],['weekdays','平日'],['weekly','毎週'],['monthly','毎月'],['monthly25','毎月25日'],['monthend','毎月末'],['yearly','毎年']];
-function confirmDeposit(){
-  document.querySelectorAll('#sheet .pr').forEach(card=>{
-    const i=+card.dataset.i,p=pendingParse[i];
-    card.querySelectorAll('[data-f]').forEach(el=>{
-      const f=el.dataset.f,v=el.value;
-      if(f==='person')p.person=v.trim()||null;
-      else if(f==='next')p.next=v.trim()||null;
-      else if(f==='due'||f==='nextCheck')p[f]=fromLocalInput(v);
-      else if(f==='repeat')p.repeat=v;
-      else p[f]=v.trim();
-    });
-    p.status=p.ball==='self'?'now':'wait';
+/* 自動登録：確認画面のボタン押しを廃止し、登録済みサマリー（行タップで修正・全取り消し可）を出す */
+function registerParsed(list){
+  const created=[];
+  list.forEach((p,i)=>{
     const id='t'+Date.now()+'_'+i;
-    DB.tasks.push({id,ws:p.ws,title:p.title,status:p.status,ball:p.ball,person:p.person,next:p.next,
-      due:p.due,nextCheck:p.nextCheck,mins:p.mins,prio:p.prio,repeat:p.repeat||'none',answer:p.ball!=='self'?'none':undefined,
+    DB.tasks.push({id,ws:p.ws,title:p.title,status:p.ball==='self'?'now':'wait',ball:p.ball,person:p.person||null,next:p.next||null,
+      due:p.due||null,dueLabel:p.dueLabel||null,nextCheck:p.nextCheck||null,mins:p.mins||null,prio:p.prio||3,
+      repeat:p.repeat||'none',repeatDay:p.repeatDay!=null?p.repeatDay:null,repeatDate:p.repeatDate||null,
+      answer:p.ball!=='self'?'none':undefined,
       photo:(i===0?pendingPhoto:null)||undefined,
       updated:TODAY.toISOString(),follows:p.person?[`${fday(0)} 登録`]:undefined});
-    learnFrom(p);
+    learnFrom(p); created.push({id,p});
   });
-  pendingPhoto=null; $('#depPhoto').innerHTML='';
-  save(); closeSheet(); $('#depText').value='';
-  toast(`${pendingParse.length}件を登録しました。AIが追跡します`); go('home');
+  pendingPhoto=null; const dp=$('#depPhoto'); if(dp)dp.innerHTML='';
+  save(); $('#depText').value='';
+  return created;
 }
+function showRegisteredSheet(created,byAI){
+  const rows=created.map(c=>{
+    const p=c.p, b=BALL[p.ball]||BALL.self;
+    return `<div class="mini" style="border-left-color:${wsColor(p.ws)}">
+      <div class="m-body" onclick="openEdit('${c.id}')">
+        <div class="m-ttl">${esc(p.title)}</div>
+        <div class="m-sub"><span class="ws" style="color:${wsColor(p.ws)}">${esc(p.ws)}</span>
+          ${(p.due||p.dueLabel)?`<span>🕐 ${p.dueLabel?esc(p.dueLabel):fmtDue(p.due)}</span>`:''}
+          ${repeatMark(p)?`<span>${repeatMark(p)}</span>`:''}
+          <span class="ball ${b.cls}">${b.icon} ${b.label}</span></div>
+        ${p.dup?`<div class="m-sub" style="color:var(--amber)">⚠️「${esc(p.dup)}」と重複かも（不要ならタップ→削除）</div>`:''}
+        ${p.next?`<div class="next">👉 <b>次にやること</b>：${esc(p.next)}</div>`:''}
+      </div><span class="m-edit">✎</span></div>`;
+  }).join('');
+  openSheet(`<h3>✅ ${created.length}件 登録しました${byAI?'（Claudeが整理）':''}</h3>
+    <p class="desc">違うところがあれば、その行をタップして直せます。</p>
+    ${rows}
+    <div class="sheet-acts">
+      <button class="ed" onclick='undoRegister(${JSON.stringify(created.map(c=>c.id))})'>すべて取り消す</button>
+      <button class="ok" onclick="closeSheet();go('home')">OK</button>
+    </div>`);
+}
+function undoRegister(ids){
+  DB.tasks=DB.tasks.filter(t=>!ids.includes(t.id));
+  save(); closeSheet(); toast('取り消しました'); refreshCur();
+}
+const REPEAT_OPTS=[['none','なし（1回）'],['daily','毎日'],['weekdays','平日'],['weekly','毎週'],['monthly','毎月'],['monthly25','毎月25日'],['monthend','毎月末'],['yearly','毎年']];
 function learnFrom(p){
   // 簡易学習：相手→所属の対応を記憶（確認・修正可）
   if(p.person&&p.ws!=='未分類'){
@@ -1817,7 +1946,7 @@ function tryCommand(q){
     if(/今日/.test(head))targets=targets.filter(t=>t.status==='now');
     if(!targets.length)return `対象になる仕事が見つかりませんでした。`;
     const lbl=moveTo[0], off=/明後日/.test(lbl)?2:/来週/.test(lbl)?7:/今日/.test(lbl)?0:1;
-    targets.forEach(t=>{ const nd=addD(off); if(t.due){const o=new Date(t.due);nd.setHours(o.getHours(),o.getMinutes(),0,0);}else nd.setHours(18,0,0,0); t.due=nd.toISOString(); t.updated=TODAY.toISOString(); });
+    targets.forEach(t=>{ const nd=addD(off); if(t.due){const o=new Date(t.due);nd.setHours(o.getHours(),o.getMinutes(),0,0);}else nd.setHours(18,0,0,0); t.due=nd.toISOString(); t.dueLabel=null; t.updated=TODAY.toISOString(); });
     save(); return `${ws&&ws!=='未分類'?ws+'の':''}${targets.length}件を${lbl}へ移しました。`;
   }
   // 単体リスケ：「「○○」を来週に回して」
@@ -1828,7 +1957,7 @@ function tryCommand(q){
       const off=/明後日/.test(q)?2:/来週/.test(q)?7:/今日/.test(q)?0:1;
       const nd=addD(off);                                  // ← TODAY基準の絶対日付（月またぎ誤りを修正）
       if(t.due){ const o=new Date(t.due); nd.setHours(o.getHours(),o.getMinutes(),0,0); } else nd.setHours(18,0,0,0);
-      t.due=nd.toISOString(); t.updated=TODAY.toISOString(); save();
+      t.due=nd.toISOString(); t.dueLabel=null; t.updated=TODAY.toISOString(); save();
       return `「${t.title}」を${lbl}（${fmtDue(t.due)}）に移しました。`; }
   }
   // 対応不要
@@ -1864,8 +1993,9 @@ function openMode(){
 }
 function setMode(k){ mode=k; save(); const m=MODES[k]; $('#modeChip').className='mode-chip '+m.cls; $('#modeLabel').textContent=m.label; closeSheet(); toast(`モード：${m.label}`); renderHome(); }
 function updateBadges(){
+  const b=$('#navFollowBadge'); if(!b)return;   // フォローはナビから外れたためバッジは任意
   const need=waitingTasks().filter(t=>isOverdue(t.nextCheck||t.due)||(t.nextCheck&&fmtDue(t.nextCheck).startsWith('今日'))).length;
-  const b=$('#navFollowBadge'); if(need){b.textContent=need;b.classList.remove('hidden');}else b.classList.add('hidden');
+  if(need){b.textContent=need;b.classList.remove('hidden');}else b.classList.add('hidden');
 }
 
 function openSettings(){
@@ -1898,6 +2028,14 @@ function openSettings_html(s,seg,notifyState){
     <div class="set-row"><div><div class="sl">モデル</div><div class="sd">解析・秘書会話に使用</div></div>
       <div class="segbtns">${[['claude-opus-4-8','高性能'],['claude-haiku-4-5','高速・低コスト']].map(o=>`<button class="${(DB.settings.aiModel||'claude-opus-4-8')===o[0]?'on':''}" onclick="setSetting('aiModel','${o[0]}')">${o[1]}</button>`).join('')}</div></div>
     <div class="note-box">🔐 キーは<b>この端末にのみ</b>保存され、バックアップJSONには含まれません。通信は端末→Anthropicへ直接。オフライン・エラー時は自動でルール解析に切り替わります。<br>💴 目安：高性能=1回あたり数円、高速・低コスト=1円未満（Anthropicに使った分だけ課金）。キーは console.anthropic.com で発行できます。</div>
+
+    <div class="set-h">Googleカレンダー</div>
+    <div class="set-row"><div><div class="sl">接続状態</div><div class="sd">${gcalConnected()?'✅ 連携中 — 予定ページに表示・追加はGoogleへ':gcalConfigured()?'ID設定済み・未接続':'未設定'}</div></div>
+      ${gcalConnected()?`<button class="ftab" onclick="gcalDisconnect()">解除</button>`:''}</div>
+    <div class="edit-fld" style="margin-top:8px"><label>GoogleクライアントID${gcalConfigured()?'（変更時のみ入力）':''}</label>
+      <input id="gcalIdInput" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off"></div>
+    <div class="segbtns" style="margin-bottom:10px"><button class="on" onclick="gcalConnect()">${gcalConnected()?'再接続':'接続する'}</button></div>
+    <div class="note-box">📅 連携すると、Googleカレンダーの予定が「予定」ページとホームに表示され、PILOTから追加した予定はGoogleに登録されます。<br>初回はGoogle Cloudでの無料設定（10分・PC推奨）が必要です。PCのClaudeに<b>「Google連携の手順を教えて」</b>と聞いてください。</div>
 
     <div class="set-h">ワークスペース</div>
     <div class="set-row"><div><div class="sl">仕事領域を管理</div><div class="sd">${wsNames().filter(n=>n!=='未分類').join('・')||'（未登録）'}</div></div><button class="ftab" onclick="openWorkspaces()">編集</button></div>
@@ -2058,16 +2196,167 @@ function reentryCheck(){
 /* =====================================================================
    予定の手動追加・削除（毎日固定を解消・日付別）
    ===================================================================== */
-function addSchedule(){
-  openSheet(`<h3>予定を追加</h3><p class="desc">${fmtFull(TODAY)} の予定を登録します。</p>
-    <div class="edit-row2"><div class="edit-fld"><label>時刻</label><input type="time" id="sc_t" value="09:00"></div>
-      <div class="edit-fld" style="flex:2"><label>内容</label><input id="sc_ev" placeholder="例：取引先訪問"></div></div>
+let schedTarget=null;
+function addSchedule(){ addScheduleFor(); }
+function addScheduleFor(d){
+  schedTarget=new Date(d||calSelected||TODAY);
+  openSheet(`<h3>予定を追加</h3><p class="desc">${gcalConnected()?'Googleカレンダーに登録されます':'この端末に保存されます'}</p>
+    <div class="edit-row2">
+      <div class="edit-fld"><label>日付</label><input type="date" id="sc_d" value="${schedTarget.getFullYear()}-${p2(schedTarget.getMonth()+1)}-${p2(schedTarget.getDate())}"></div>
+      <div class="edit-fld"><label>時刻</label><input type="time" id="sc_t" value="09:00"></div></div>
+    <div class="edit-fld"><label>内容</label><input id="sc_ev" placeholder="例：取引先訪問"></div>
     <div class="sheet-acts"><button class="ed" onclick="closeSheet()">やめる</button><button class="ok" onclick="saveSchedule()">追加する</button></div>`);
   setTimeout(()=>$('#sc_ev')&&$('#sc_ev').focus(),200);
 }
-function saveSchedule(){ const t=$('#sc_t').value||'09:00', ev=$('#sc_ev').value.trim(); if(!ev){toast('内容を入力してください');return;}
-  DB.schedule.push({date:dayKey(TODAY),t,ev}); save(); closeSheet(); renderHome(); toast('予定を追加しました'); }
-function delSchedule(i){ DB.schedule.splice(i,1); save(); renderHome(); }
+function saveSchedule(){
+  const dv=$('#sc_d').value, t=$('#sc_t').value||'09:00', ev=$('#sc_ev').value.trim();
+  if(!ev){toast('内容を入力してください');return;}
+  const d=dv?new Date(dv+'T00:00'):new Date(schedTarget||TODAY);
+  if(gcalConnected()){
+    closeSheet(); toast('Googleカレンダーに追加中…');
+    gcalInsert(d,t,ev,ok=>{ if(ok){toast('Googleカレンダーに追加しました');}
+      else{ DB.schedule.push({date:dayKey(d),t,ev}); save(); toast('Google追加に失敗→この端末に保存しました'); }
+      refreshCal(); });
+    return;
+  }
+  DB.schedule.push({date:dayKey(d),t,ev}); save(); closeSheet(); refreshCal(); toast('予定を追加しました');
+}
+function delSchedule(i){ DB.schedule.splice(i,1); save(); refreshCal(); }
+function refreshCal(){ if(curView==='home')renderHome(); if(curView==='cal')renderCal(); }
+
+/* =====================================================================
+   予定ページ（月間カレンダー：端末の予定＋Google＋タスク期限）
+   ===================================================================== */
+let calYM=null, calSelected=null;
+function calMove(n){ calYM=new Date(calYM.getFullYear(),calYM.getMonth()+n,1); renderCal(); }
+function calSelect(d){ calSelected=new Date(calYM.getFullYear(),calYM.getMonth(),d); renderCal(); }
+function dayItems(d){
+  const key=dayKey(d); const items=[];
+  (DB.schedule||[]).forEach((s,i)=>{ if(s.date===key)items.push({kind:'ev',t:s.t,st:s.t,ev:s.ev,idx:i}); });
+  (DB.gcal||[]).forEach(g=>{ if(g.date===key)items.push({kind:'g',t:g.t,st:g.t==='終日'?'00:01':g.t,ev:g.ev}); });
+  activeTasks().forEach(t=>{ if(t.due&&dayKey(new Date(t.due))===key){
+    const dd=new Date(t.due); const hm=`${p2(dd.getHours())}:${p2(dd.getMinutes())}`;
+    items.push({kind:'task',t:t.dueLabel?'目安':hm,st:t.dueLabel?'23:58':hm,task:t}); } });
+  items.sort((a,b)=>a.st.localeCompare(b.st));
+  return items;
+}
+function renderCal(){
+  syncToday();
+  if(!calYM){ calYM=new Date(TODAY.getFullYear(),TODAY.getMonth(),1); calSelected=new Date(TODAY); }
+  $('#calTitle').textContent=`${calYM.getFullYear()}年 ${calYM.getMonth()+1}月`;
+  $('#gsyncBtn').style.display=gcalConfigured()?'':'none';
+  const startDow=new Date(calYM).getDay(), dim=new Date(calYM.getFullYear(),calYM.getMonth()+1,0).getDate();
+  let html='';
+  for(let i=0;i<startDow;i++)html+='<div class="cal-cell blank"></div>';
+  for(let d=1;d<=dim;d++){
+    const dt=new Date(calYM.getFullYear(),calYM.getMonth(),d);
+    const dots=dayItems(dt).slice(0,4).map(it=>`<span class="cal-dot ${it.kind==='task'?'task':it.kind==='g'?'g':'ev'}"></span>`).join('');
+    const isToday=dayKey(dt)===dayKey(TODAY), isSel=calSelected&&dayKey(dt)===dayKey(calSelected);
+    const dow=dt.getDay();
+    html+=`<button class="cal-cell ${isToday?'today':''} ${isSel?'sel':''} ${(dt<startOfDay(TODAY)&&!isToday)?'past':''}" onclick="calSelect(${d})">
+      <span class="d ${dow===0?'sun':dow===6?'sat':''}">${d}</span><span class="cal-dots">${dots}</span></button>`;
+  }
+  $('#calGrid').innerHTML=html;
+  renderCalDay();
+}
+function renderCalDay(){
+  const d=calSelected||TODAY;
+  $('#calDayTitle').textContent=fmtFull(d)+(dayKey(d)===dayKey(TODAY)?'（今日）':'');
+  const items=dayItems(d);
+  $('#calDayList').innerHTML=(items.length?`<div class="tl">${items.map(it=>{
+    if(it.kind==='task'){ const t=it.task;
+      return `<div class="tl-row"><span class="tl-time ${(isOverdue(t.due)&&!t.dueLabel)?'tl-late':''}">${it.t}</span><span class="tl-dot" style="background:${wsColor(t.ws)}"></span>
+        <div class="tl-body" onclick="taskActionSheet('${t.id}')">${esc(t.title)}${t.dueLabel?` <span class="tag wait">${esc(t.dueLabel)}</span>`:''}<div class="tl-sub">${esc(t.ws)}${repeatMark(t)?' ・'+repeatMark(t):''}</div></div>
+        <button class="tl-chk" onclick="completeTask('${t.id}');renderCal()">✓</button></div>`; }
+    if(it.kind==='g')return `<div class="tl-row tl-ev"><span class="tl-time">${it.t}</span><span class="tl-dot" style="background:#3f8af0"></span><div class="tl-body">${esc(it.ev)}<div class="tl-sub">Googleカレンダー</div></div></div>`;
+    return `<div class="tl-row tl-ev"><span class="tl-time">${it.t}</span><span class="tl-dot"></span><div class="tl-body">${esc(it.ev)}</div><span class="tl-del" onclick="delSchedule(${it.idx})">×</span></div>`;
+  }).join('')}</div>`:`<div class="empty">この日の予定・期限はありません</div>`)
+  +`<div class="cal-legend"><span>● 予定</span><span style="color:#3f8af0">● Google</span><span style="color:var(--red)">● 仕事の期限</span></div>`;
+}
+
+/* =====================================================================
+   Googleカレンダー連携（読み取り＋予定追加）
+   ===================================================================== */
+let gToken=null,gTokenExp=0,gTokenClient=null,gAuthCb=null;
+function gcalConfigured(){ return !!(DB.settings.gcalClientId); }
+function gcalConnected(){ return gcalConfigured()&&!!DB.settings.gcalOn; }
+function loadGIS(cb){
+  if(window.google&&google.accounts&&google.accounts.oauth2){cb(true);return;}
+  const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client';
+  s.onload=()=>cb(true); s.onerror=()=>cb(false);
+  document.head.appendChild(s);
+}
+function gcalAuth(interactive,cb){
+  if(gToken&&Date.now()<gTokenExp){cb(true);return;}
+  if(!interactive&&!DB.settings.gcalOn){cb(false);return;}
+  loadGIS(ok=>{
+    if(!ok){cb(false);return;}
+    gAuthCb=cb;
+    if(!gTokenClient){
+      try{
+        gTokenClient=google.accounts.oauth2.initTokenClient({
+          client_id:DB.settings.gcalClientId,
+          scope:'https://www.googleapis.com/auth/calendar.events',
+          callback:(resp)=>{ const f=gAuthCb; gAuthCb=null;
+            if(resp&&resp.access_token){ gToken=resp.access_token; gTokenExp=Date.now()+((resp.expires_in||3600)-60)*1000; if(f)f(true); }
+            else if(f)f(false); },
+          error_callback:()=>{ const f=gAuthCb; gAuthCb=null; if(f)f(false); }
+        });
+      }catch(e){ gAuthCb=null; cb(false); return; }
+    }
+    try{ gTokenClient.requestAccessToken({prompt:''}); }catch(e){ const f=gAuthCb; gAuthCb=null; if(f)f(false); }
+  });
+}
+function gcalSync(manual){
+  if(!gcalConfigured()){ if(manual)openGcalHelp(); return; }
+  gcalAuth(manual,ok=>{
+    if(!ok){ if(manual)toast('Google認証できませんでした'); return; }
+    DB.settings.gcalOn=true;
+    const min=new Date(TODAY.getFullYear(),TODAY.getMonth()-1,1).toISOString();
+    const max=new Date(TODAY.getFullYear(),TODAY.getMonth()+3,1).toISOString();
+    fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?singleEvents=true&orderBy=startTime&maxResults=250&timeMin='+encodeURIComponent(min)+'&timeMax='+encodeURIComponent(max),
+      {headers:{Authorization:'Bearer '+gToken}})
+    .then(r=>{ if(!r.ok)throw new Error('HTTP '+r.status); return r.json(); })
+    .then(j=>{
+      DB.gcal=(j.items||[]).filter(e=>e.status!=='cancelled'&&e.start).map(e=>{
+        const allday=!e.start.dateTime;
+        const d=new Date(e.start.dateTime||(e.start.date+'T00:00'));
+        return {date:dayKey(d),t:allday?'終日':`${p2(d.getHours())}:${p2(d.getMinutes())}`,ev:e.summary||'(無題)'};
+      });
+      DB.gcalSyncAt=Date.now(); save();
+      if(manual)toast('Google同期完了：'+DB.gcal.length+'件');
+      refreshCal();
+    })
+    .catch(e=>{ if(manual)toast('同期失敗：'+e.message); });
+  });
+}
+function gcalInsert(dateObj,timeHHMM,title,cb){
+  gcalAuth(true,ok=>{
+    if(!ok){cb(false);return;}
+    const hm=(timeHHMM||'09:00').split(':');
+    const st=new Date(dateObj); st.setHours(+hm[0]||9,+hm[1]||0,0,0);
+    const en=new Date(st.getTime()+3600000);
+    fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',
+      headers:{Authorization:'Bearer '+gToken,'Content-Type':'application/json'},
+      body:JSON.stringify({summary:title,start:{dateTime:st.toISOString()},end:{dateTime:en.toISOString()}})})
+    .then(r=>{ if(!r.ok)throw 0; return r.json(); })
+    .then(()=>{ cb(true); gcalSync(false); })
+    .catch(()=>cb(false));
+  });
+}
+function gcalConnect(){
+  const inp=$('#gcalIdInput'); const v=inp?(inp.value||'').trim():'';
+  if(v)DB.settings.gcalClientId=v;
+  if(!DB.settings.gcalClientId){toast('クライアントIDを入力してください');return;}
+  save();
+  gcalAuth(true,ok=>{ if(ok){ DB.settings.gcalOn=true; save(); openSettings(); toast('Google連携しました'); gcalSync(true); } else toast('Google認証できませんでした（クライアントIDと承認元の設定を確認）'); });
+}
+function gcalDisconnect(){ DB.settings.gcalOn=false; gToken=null; DB.gcal=[]; save(); openSettings(); toast('Google連携を解除しました'); }
+function openGcalHelp(){
+  openSheet(`<h3>Googleカレンダー連携</h3>
+    <p class="desc">一度だけGoogle側の無料設定が必要です（10分）。⚙設定の「Googleカレンダー」欄で設定します。手順はPCのClaudeに「Google連携の手順を教えて」と聞いてください。</p>
+    <div class="sheet-acts"><button class="ok" onclick="closeSheet()">閉じる</button></div>`);
+}
 
 /* =====================================================================
    検索・完了履歴
@@ -2094,7 +2383,7 @@ function runSearch(){
   const tg=s=>({now:'now',wait:'wait',warn:'warn',done:'done',hold:'hold',archived:'hold'})[s]||'now';
   const html=list.slice(0,40).map(t=>`<div class="mini" style="border-left-color:${wsColor(t.ws)}">
     <div class="m-body" onclick="closeSheet();setTimeout(function(){openEdit('${t.id}')},260)"><div class="m-ttl">${esc(t.title)}${t.photo?' 📎':''}</div>
-    <div class="m-sub"><span class="ws" style="color:${wsColor(t.ws)}">${esc(t.ws)}</span>${t.person?`<span>${esc(t.person)}</span>`:''}<span class="tag ${tg(t.status)}">${statusJa(t.status)}</span>${t.due?`<span>🕐${fmtDue(t.due)}</span>`:''}</div></div></div>`).join('');
+    <div class="m-sub"><span class="ws" style="color:${wsColor(t.ws)}">${esc(t.ws)}</span>${t.person?`<span>${esc(t.person)}</span>`:''}<span class="tag ${tg(t.status)}">${statusJa(t.status)}</span>${(t.due||t.dueLabel)?`<span>🕐${fmtDueT(t)}</span>`:''}</div></div></div>`).join('');
   $('#sqResults').innerHTML=html||`<div class="empty">該当する仕事はありません</div>`;
 }
 
