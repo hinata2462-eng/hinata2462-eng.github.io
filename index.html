@@ -439,9 +439,21 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 .fl-sec b{color:var(--muted);}
 .fl-sec.red{color:var(--red);} .fl-sec.red b{color:var(--red);}
 .fl-act{margin-left:auto;color:var(--red);font-weight:800;font-size:12px;}
-.fl-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f1f2f4;}
+.fl-row{display:flex;align-items:center;gap:10px;padding:9px 10px 9px 9px;border-bottom:1px solid #f1f2f4;border-left:4px solid transparent;border-radius:0 10px 10px 0;}
 .flat > .fl-row:last-child{border-bottom:none;}
-.fl-dot{width:9px;height:9px;border-radius:50%;flex:none;}
+
+/* ⏰ 全画面アラーム */
+.alarm-ov{position:fixed;inset:0;background:rgba(15,23,42,.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;}
+.alarm-ov.hidden{display:none;}
+.alarm-box{background:#fff;border-radius:22px;padding:30px 22px 24px;width:100%;max-width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.alarm-emo{font-size:56px;line-height:1;animation:almSwing 1s ease-in-out infinite;}
+@keyframes almSwing{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}
+.alarm-time{font-size:34px;font-weight:900;color:#1c2b46;margin-top:8px;letter-spacing:.02em;}
+.alarm-ttl{font-size:17px;font-weight:800;color:#2c3340;margin-top:8px;line-height:1.5;word-break:break-word;}
+.alarm-acts{display:flex;gap:10px;margin-top:22px;}
+.alarm-acts button{flex:1;border:none;border-radius:14px;padding:15px 8px;font-size:15px;font-weight:800;cursor:pointer;}
+.al-snz{background:#eef1f5;color:#2c3340;}
+.al-stop{background:var(--red,#d64545);color:#fff;}
 .fl-ttl{flex:1;min-width:0;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;}
 .fl-due{flex:none;font-size:12px;font-weight:700;color:var(--muted);text-align:right;}
 .fl-due.red{color:var(--red);}
@@ -588,6 +600,17 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
   <div class="sheet" id="sheet"></div>
 </div>
 <div class="toast" id="toast"></div>
+<div class="alarm-ov hidden" id="alarmOv">
+  <div class="alarm-box">
+    <div class="alarm-emo">⏰</div>
+    <div class="alarm-time" id="almTime"></div>
+    <div class="alarm-ttl" id="almTtl"></div>
+    <div class="alarm-acts">
+      <button class="al-snz" onclick="snoozeAlarm()">10分後に<br>もう一度</button>
+      <button class="al-stop" onclick="stopAlarm()">止める</button>
+    </div>
+  </div>
+</div>
 <input type="file" id="importFile" accept="application/json" class="hidden" onchange="importData(event)">
 <input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden" onchange="onPhotoPick(event)">
 
@@ -666,8 +689,8 @@ function bootstrapDB(){
   return ensureSettings({version:DB_VERSION,onboarded:false,workspaces,tasks:[],projects:[],schedule:[],memory:[],learned:[],notified:[],mode:'normal',lastOpen:TODAY.toISOString(),lastCleanup:null,chat:[]});
 }
 function ensureSettings(d){
-  d.settings = Object.assign({notify:true, strength:'std', privacy:'name', morningBrief:true, nightReview:true, workStart:'09:00', workEnd:'18:00', aiModel:'claude-opus-4-8', gcalClientId:'', gcalOn:false}, d.settings||{});
-  d.memory=d.memory||[]; d.learned=d.learned||[]; d.notified=d.notified||[]; d.chat=(d.chat||[]).filter(m=>!m.typing); d.gcal=d.gcal||[];
+  d.settings = Object.assign({notify:true, strength:'std', privacy:'name', morningBrief:true, nightReview:true, workStart:'09:00', workEnd:'18:00', aiModel:'claude-opus-4-8', gcalClientId:'', gcalOn:false, alarm:true}, d.settings||{});
+  d.memory=d.memory||[]; d.learned=d.learned||[]; d.notified=d.notified||[]; d.chat=(d.chat||[]).filter(m=>!m.typing); d.gcal=d.gcal||[]; d.snoozes=d.snoozes||[];
   if(!Array.isArray(d.workspaces)||!d.workspaces.length){ d.workspaces=['仕事','プライベート','未分類'].map((n,i)=>({name:n,color:PALETTE[i%PALETTE.length]})); }
   if(!d.workspaces.some(w=>w.name==='未分類'))d.workspaces.push({name:'未分類',color:'#8a8f98'});
   return d;
@@ -889,9 +912,8 @@ function renderHome(){
     ${secHtml('期限切れ',secOver,'red',`<button class="fl-act" onclick="reschedOverdue()">リスケジュール</button>`)}
     ${secHtml('きょう',secToday)}
     ${secHtml('これから',secLater)}
-    ${doneRows.length?`<div class="fl-sec">完了</div>`+doneRows.map(t=>`<div class="fl-row" style="opacity:.5">
+    ${doneRows.length?`<div class="fl-sec">完了</div>`+doneRows.map(t=>`<div class="fl-row" style="opacity:.5;border-left-color:${wsColor(t.ws)};background:${wsColor(t.ws)}0d">
       <button class="chk sm" onclick="reopenTask('${t.id}')" title="未完了に戻す" style="background:var(--green);border-color:var(--green);color:#fff">✓</button>
-      <span class="fl-dot" style="background:${wsColor(t.ws)}"></span>
       <div class="fl-ttl" style="text-decoration:line-through;color:#9aa0a8">${esc(t.title)}</div></div>`).join(''):''}
   </div>`:`<div class="empty">やることは空っぽです 🎉</div>`;
 
@@ -1023,9 +1045,9 @@ function flRow(t,stalledIds){
   if(t.dueLabel)dueTxt=t.dueLabel;
   else if(t.due){ const d=new Date(t.due); dueTxt=over?`${d.getMonth()+1}月${d.getDate()}日`:fmtDue(t.due); }
   const idle=stalledIds&&stalledIds.has(t.id)&&!over;
-  return `<div class="fl-row">
+  const c=wsColor(t.ws);
+  return `<div class="fl-row" style="border-left-color:${c};background:${c}0d">
     <button class="chk sm" onclick="completeTask('${t.id}')">✓</button>
-    <span class="fl-dot" style="background:${wsColor(t.ws)}"></span>
     <div class="fl-ttl" onclick="taskActionSheet('${t.id}')">${idle?'💤 ':''}${esc(t.title)}</div>
     ${t.prog!=null?`<span class="t-prog">${t.prog}%</span>`:''}${repeatMark(t)?`<span class="t-rep">🔁</span>`:''}
     <div class="fl-due ${over?'red':''}">${dueTxt}</div>
@@ -1847,12 +1869,12 @@ function renderFollow(){
 }
 function personGroup(person,items){
   const ini=person.replace(/(さん|社長|部長|課長|専務|様|くん|君|デザイナー|担当者)/g,'').replace(/\s+/g,'').slice(-2)||'？';
-  const ws=items[0].ws; const overdue=items.some(t=>isOverdue(t.nextCheck||t.due));
+  const ws=items[0].ws; const wc=wsColor(ws); const overdue=items.some(t=>isOverdue(t.nextCheck||t.due));
   let qs=[]; items.forEach(t=>{ if(t.answer==='partial'){(t.ansNG||[]).forEach(q=>qs.push({q,ok:false}));(t.ansOK||[]).forEach(q=>qs.push({q,ok:true}));} else qs.push({q:t.title,ok:false}); });
   const hist=items.flatMap(t=>t.follows||[]);
   const ids=items.map(i=>i.id);
-  return `<div class="pgroup">
-    <div class="ph"><div class="av">${esc(ini)}</div>
+  return `<div class="pgroup" style="border-left:4px solid ${wc}">
+    <div class="ph"><div class="av" style="background:${wc}">${esc(ini)}</div>
       <div style="flex:1"><div class="pn">${esc(person)} ${overdue?'<span class="over">確認超過</span>':''}</div>
       <div class="pmeta">${esc(ws)} ／ ${ballBadge(items[0].ball)} ／ 次回確認 ${items[0].nextCheck?fmtDue(items[0].nextCheck):'未設定'}</div></div></div>
     <ul>${qs.map(x=>`<li class="${x.ok?'answered':''}"><span class="qs">${esc(x.q)}</span><span class="qtag ${x.ok?'ok':'no'}">${x.ok?'回答済':'未回答'}</span></li>`).join('')}</ul>
@@ -2146,7 +2168,10 @@ function openSettings_html(s,seg,notifyState){
     <div class="set-row"><div><div class="sl">通知の内容</div><div class="sd">プライバシー</div></div>${seg('privacy','privacy',[['name','案件名'],['hidden','件名なし']])}</div>
     <div class="set-row"><div><div class="sl">朝のブリーフィング</div></div><div class="switch ${s.morningBrief?'on':''}" onclick="toggleSetting('morningBrief',this)"></div></div>
     <div class="set-row"><div><div class="sl">夜の振り返り</div></div><div class="switch ${s.nightReview?'on':''}" onclick="toggleSetting('nightReview',this)"></div></div>
-    <div class="note-box">⚠️ <b>閉じている間のプッシュ通知</b>は、サーバー（バックエンド）が必要です。現状はアプリを開いている間に通知します。</div>
+    <div class="set-row"><div><div class="sl">⏰ アラーム</div><div class="sd">予定の時刻・期限・確認時刻に、音と画面で知らせます</div></div>
+      <div class="switch ${s.alarm?'on':''}" onclick="toggleSetting('alarm',this)"></div></div>
+    <div class="set-row"><div><div class="sl">アラームを試す</div><div class="sd">音の鳴り方を確認できます</div></div><button class="ftab" onclick="testAlarm()">鳴らす</button></div>
+    <div class="note-box">⚠️ 通知・アラームは<b>アプリを開いている間</b>に動きます。閉じている間のプッシュ通知はサーバー（バックエンド）が必要です。</div>
 
     <div class="set-h">本物のAI（Claude API）</div>
     <div class="set-row"><div><div class="sl">接続状態</div><div class="sd">${getApiKey()?'✅ 設定済み — 解析と秘書会話がClaudeで動作':'未設定 — ルール解析で動作中'}</div></div>
@@ -2255,6 +2280,76 @@ function nightReviewCheck(){
 function nightMoveTomorrow(){
   activeTasks().filter(t=>t.ball==='self'&&t.status==='now'&&t.due&&fmtDue(t.due).startsWith('今日')).forEach(t=>{ const nd=addD(1); const o=new Date(t.due); nd.setHours(o.getHours(),o.getMinutes(),0,0); t.due=nd.toISOString(); t.updated=TODAY.toISOString(); });
   save(); closeSheet(); toast('未完了を明日へ移しました'); refreshCur();
+}
+
+/* ⏰ アラーム（開いている間）：予定の時刻・タスク期限・確認時刻に音＋全画面表示 */
+let audioCtx=null, almBeepT=null, almVibT=null, alarmCur=null;
+function ensureAudio(){ try{ const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return; if(!audioCtx)audioCtx=new AC(); if(audioCtx.state==='suspended')audioCtx.resume(); }catch(e){} }
+// iPhoneは操作（タップ）後でないと音が出せないため、最初のタップで音の準備をしておく
+document.addEventListener('touchend',ensureAudio,{passive:true});
+document.addEventListener('click',ensureAudio);
+function almBeep(){
+  try{
+    if(!audioCtx)return; const t=audioCtx.currentTime;
+    [[880,0],[660,.28]].forEach(([f,off])=>{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.type='sine'; o.frequency.value=f; o.connect(g); g.connect(audioCtx.destination);
+      g.gain.setValueAtTime(0.0001,t+off);
+      g.gain.exponentialRampToValueAtTime(0.35,t+off+0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+off+0.26);
+      o.start(t+off); o.stop(t+off+0.3);
+    });
+  }catch(e){}
+}
+function startAlarmSound(){
+  stopAlarmSound(); ensureAudio();
+  almBeep(); almBeepT=setInterval(almBeep,1300);
+  if(navigator.vibrate){ const v=()=>{try{navigator.vibrate([350,150,350]);}catch(e){}}; v(); almVibT=setInterval(v,1300); }
+}
+function stopAlarmSound(){
+  if(almBeepT){clearInterval(almBeepT);almBeepT=null;}
+  if(almVibT){clearInterval(almVibT);almVibT=null;}
+  try{navigator.vibrate&&navigator.vibrate(0);}catch(e){}
+}
+function showAlarm(title,timeTxt){
+  alarmCur={title,timeTxt};
+  $('#almTime').textContent=timeTxt; $('#almTtl').textContent=title;
+  $('#alarmOv').classList.remove('hidden');
+  startAlarmSound();
+  if(typeof Notification!=='undefined'&&Notification.permission==='granted')fire('⏰ '+timeTxt,title);
+}
+function stopAlarm(){ stopAlarmSound(); $('#alarmOv').classList.add('hidden'); alarmCur=null; }
+function snoozeAlarm(){
+  if(alarmCur){ DB.snoozes=DB.snoozes||[]; DB.snoozes.push({title:alarmCur.title,at:new Date(Date.now()+10*60000).toISOString()}); save(); toast('⏰ 10分後にもう一度鳴らします'); }
+  stopAlarm();
+}
+function testAlarm(){ ensureAudio(); showAlarm('テストです。この音と画面でお知らせします',`${p2(TODAY.getHours())}:${p2(TODAY.getMinutes())}`); }
+function alarmTick(){
+  if(!DB.settings.alarm||mode==='off')return;
+  if(alarmCur)return;                                   // 鳴っている間は重ねない
+  syncToday();
+  const now=TODAY.getTime(), win=3*60000;               // 時刻を3分過ぎるまでが鳴らす対象（古いものは鳴らさない）
+  DB.notified=DB.notified||[]; let changed=false;
+  const mark=k=>{ if(DB.notified.includes(k))return false; DB.notified.push(k); changed=true; return true; };
+  const hits=[];
+  (DB.snoozes||[]).slice().forEach(s=>{ if(new Date(s.at).getTime()<=now){ hits.push({title:s.title,d:new Date(s.at)}); DB.snoozes.splice(DB.snoozes.indexOf(s),1); changed=true; } });
+  dayItems(TODAY).forEach(it=>{
+    if(it.kind==='task'){
+      const t=it.task; if(!t.due||t.dueLabel||t.ball!=='self')return;
+      const tm=new Date(t.due).getTime();
+      if(tm<=now&&now-tm<win&&mark('alm-t-'+t.id+'-'+t.due))hits.push({title:t.title,d:new Date(t.due)});
+    }else{
+      if(!/^\d{1,2}:\d{2}$/.test(it.t||''))return;      // 「終日」などは鳴らさない
+      const [h,m]=it.t.split(':').map(Number); const d=new Date(TODAY); d.setHours(h,m,0,0);
+      if(d.getTime()<=now&&now-d.getTime()<win&&mark('alm-e-'+dayKey()+'-'+it.t+'-'+it.ev))hits.push({title:it.ev,d});
+    }
+  });
+  waitingTasks().forEach(t=>{
+    if(!t.nextCheck)return; const tm=new Date(t.nextCheck).getTime();
+    if(tm<=now&&now-tm<win&&mark('alm-c-'+t.id+'-'+t.nextCheck))hits.push({title:(t.person?t.person+'に確認：':'確認：')+t.title,d:new Date(t.nextCheck)});
+  });
+  if(changed)save();
+  if(hits.length){ const h=hits[0]; showAlarm(hits.length>1?`${h.title}（ほか${hits.length-1}件）`:h.title,`${p2(h.d.getHours())}:${p2(h.d.getMinutes())}`); }
 }
 
 /* バックアップ */
@@ -2708,14 +2803,14 @@ function closeSheet(){ if(onboarding)return; $('#scrim').classList.remove('on');
 function closeSheetForce(){ $('#scrim').classList.remove('on'); document.body.style.overflow=''; }
 
 let appTimer=null;
-function startAppTimers(){ if(appTimer)clearInterval(appTimer); appTimer=setInterval(()=>{ syncToday(); nightReviewCheck(); },60000); }
+function startAppTimers(){ if(appTimer)clearInterval(appTimer); appTimer=setInterval(()=>{ syncToday(); nightReviewCheck(); alarmTick(); },60000); alarmTick(); }
 function postInit(){
   renderHome(); reentryCheck(); nightReviewCheck(); startAppTimers();
   if(DB.settings.notify&&typeof Notification!=='undefined'&&Notification.permission==='granted')startNotifyLoop();
 }
 function init(){
   const m=MODES[mode]; $('#modeChip').className='mode-chip '+m.cls; $('#modeLabel').textContent=m.label;
-  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){syncToday();if(curView==='home')renderHome();nightReviewCheck();} });
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){syncToday();if(curView==='home')renderHome();nightReviewCheck();alarmTick();} });
   if(!DB.onboarded){ openOnboarding(); return; }     // 新規利用者は初回設定へ
   postInit();
 }
