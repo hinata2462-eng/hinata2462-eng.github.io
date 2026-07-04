@@ -393,10 +393,14 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 .gsync{flex:none;font-size:11.5px;font-weight:800;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 10px;color:#46505e;box-shadow:var(--shadow);}
 .cal-wd{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:0;margin:0 2px 4px;}
 .cal-wd{white-space:normal;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:0 2px;}
-.cal-cell{aspect-ratio:1/1.05;background:var(--card);border:1px solid var(--line);border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px;gap:3px;position:relative;}
-.cal-cell.blank{background:transparent;border:none;box-shadow:none;}
-.cal-cell .d{font-size:13px;font-weight:700;color:#3a414c;line-height:1;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:0 2px;}
+.cal-cell{min-height:64px;background:var(--card);border:1px solid var(--line);border-radius:9px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:3px 2px 3px;gap:2px;position:relative;overflow:hidden;}
+.cal-cell.blank{background:transparent;border:none;box-shadow:none;min-height:0;}
+.cal-cell .d{font-size:12px;font-weight:700;color:#3a414c;line-height:1;align-self:center;margin-bottom:1px;}
+.cal-it{display:block;font-size:8.5px;line-height:1.3;font-weight:700;color:#fff;border-radius:3px;padding:1px 3px;white-space:nowrap;overflow:hidden;text-align:left;}
+.cal-it.ev{background:#8a91a0;} .cal-it.g{background:#3f8af0;} .cal-it.task{background:var(--red);}
+.cal-more{font-size:8.5px;font-weight:800;color:var(--muted);text-align:center;}
+.cal-cell.sel .cal-more{color:#dfe6f5;}
 .cal-cell.today{border-color:var(--navy);border-width:2px;}
 .cal-cell.today .d{color:var(--navy);font-weight:800;}
 .cal-cell.sel{background:var(--navy);}
@@ -431,6 +435,7 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
   </div>
   <div class="hdr-right">
     <button class="mode-chip" id="modeChip" onclick="openMode()"><span class="dot"></span><span id="modeLabel">通常</span></button>
+    <button class="gear-btn" onclick="go('sec')">💬</button>
     <button class="gear-btn" onclick="openSearch()">🔍</button>
     <button class="gear-btn" onclick="openSettings()">⚙️</button>
   </div>
@@ -453,29 +458,6 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
   <div id="stallList"></div>
   <div id="holdSlot"></div>
   <div id="cleanupSlot"></div>
-</section>
-
-<!-- DEPOSIT -->
-<section class="view" id="v-deposit">
-  <div class="deposit-hd">
-    <div class="t">仕事を預ける</div>
-    <div class="s">話す・書くだけ。所属・相手・期限・次にやることはAIが整理します。</div>
-  </div>
-  <div class="miccircle" id="micCircle" onclick="toggleMic()">🎙️</div>
-  <div class="mic-cap" id="micCap">タップして話す</div>
-  <div class="dep-area">
-    <textarea id="depText" placeholder="例：佐藤さんにアトマイザーの見積を頼んだ。金曜までに返事がなければ午後に電話する"></textarea>
-    <div id="depPhoto"></div>
-    <button class="big-btn" onclick="submitDeposit()">🤖 整理して登録する</button>
-  </div>
-  <div class="dep-tools">
-    <button onclick="document.getElementById('depText').focus()"><span class="ic">⌨️</span>文字で書く</button>
-    <button onclick="photoStub()"><span class="ic">📷</span>写真を撮る</button>
-    <button onclick="quickEgs()"><span class="ic">💡</span>例を入れる</button>
-  </div>
-  <div class="dep-eg">
-    <b>複数まとめてOK：</b><br>「明日田中さんに見積を送って、金曜までに返事がなければ電話。それとPVのロゴをデザイナーに頼む」
-  </div>
 </section>
 
 <!-- CALENDAR (予定・今月の流れ) -->
@@ -509,6 +491,7 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 
 <!-- SECRETARY -->
 <section class="view" id="v-sec">
+  <button class="backbar" onclick="go('home')">‹ ホームへ戻る</button>
   <div class="sec" style="margin-top:6px"><span class="bar"></span>AI秘書</div>
   <div class="chips" id="quickChips"></div>
   <div class="chat" id="chatLog"></div>
@@ -524,9 +507,8 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 
 <nav>
   <button class="on" data-v="home" onclick="go('home')"><span class="ic">🏠</span>ホーム</button>
-  <button class="dep" data-v="deposit" onclick="go('deposit')"><span class="ic">🎙️</span>預ける</button>
+  <button class="dep" onclick="openDepositSheet(true)"><span class="ic">🎙️</span>登録</button>
   <button data-v="cal" onclick="go('cal')"><span class="ic">📅</span>予定</button>
-  <button data-v="sec" onclick="go('sec')"><span class="ic">💬</span>秘書</button>
 </nav>
 
 <div class="scrim" id="scrim" onclick="if(event.target===this)closeSheet()">
@@ -711,7 +693,6 @@ function go(v){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   $('#chatBar').classList.toggle('hidden',v!=='sec');
   window.scrollTo({top:0,behavior:'instant'});
-  if(v==='deposit'){ const s=document.querySelector('.deposit-hd .s'); if(s)s.innerHTML=aiEnabled()?'話す・書くだけで<b>登録まで自動</b>。Claudeが所属・相手・期限を整理します。':'話す・書くだけで<b>登録まで自動</b>。所属・相手・期限はAIが整理します。'; }
   if(v==='home')renderHome(); if(v==='follow')renderFollow(); if(v==='proj')renderProjects(); if(v==='sec')renderSecretary();
   if(v==='cal'){ renderCal(); if(gcalConnected()&&Date.now()-(DB.gcalSyncAt||0)>600000)gcalSync(false); }
 }
@@ -789,7 +770,7 @@ function renderHome(){
   if(!hero){
     slot.innerHTML=`<div class="hero hero-empty"><div class="lab">✓ 今やる仕事はありません</div>
       <div class="ttl">自分の番の仕事は片付きました</div>
-      <div class="why">📌 返事待ちはAIが追跡しています。新しい仕事は「預ける」から登録できます。</div></div>`;
+      <div class="why">📌 返事待ちはAIが追跡しています。新しい仕事は下の🎙️登録ボタンから。</div></div>`;
   }else{
     const reasons=[];
     if(isOverdue(hero.due)&&!hero.dueLabel)reasons.push('期限を過ぎています');else if(hero.due||hero.dueLabel)reasons.push(`期限が ${fmtDueT(hero)}`);
@@ -802,6 +783,7 @@ function renderHome(){
         ${hero.mins?`<span class="pill">⏱ 約${hero.mins}分</span>`:''}
         <span class="pill">📋 残り${selfNow.length}件</span>
       </div>
+      ${hero.prog!=null?`<div style="display:flex;align-items:center;gap:8px;margin-top:12px"><div class="bar-track" style="flex:1;height:6px;background:rgba(255,255,255,.2)"><div class="bar-fill" style="width:${hero.prog}%"></div></div><span style="font-size:12px;font-weight:800;color:#cdd8f5">${hero.prog}%</span></div>`:''}
       ${hero.next?`<div class="why">👉 次にやること：${esc(hero.next)}</div>`:''}
       ${reasons.length?`<div class="why">💡 ${esc(reasons.join('・'))}</div>`:''}
       <div class="acts">
@@ -914,10 +896,21 @@ function taskActionSheet(id){
   openSheet(`<h3>${esc(t.title)}</h3>
     <p class="desc">${esc(t.ws)} ／ ${(t.due||t.dueLabel)?'期限 '+fmtDueT(t):'期限なし'}${repeatMark(t)?' ／ '+repeatMark(t):''}${t.person?' ／ '+esc(t.person):''}</p>
     ${t.next?`<div class="next" style="margin-bottom:12px">👉 <b>次にやること</b>：${esc(t.next)}</div>`:''}
+    ${t.prog!=null?`<div class="pr" style="padding:11px 13px;margin-bottom:12px">
+      <div class="bar-track"><div class="bar-fill" style="width:${t.prog}%"></div></div>
+      <div class="bar-lab"><span>進捗</span><span><b>${t.prog}%</b></span></div>
+      <div class="segbtns" style="margin-top:9px">${[10,25,50,75,90].map(p=>`<button class="${t.prog===p?'on':''}" onclick="setProg('${t.id}',${p})">${p}</button>`).join('')}<button onclick="completeTask('${t.id}');closeSheet()">✓完了</button></div>
+    </div>`:''}
     <button class="opt" onclick="completeTask('${t.id}');closeSheet()"><span class="oi">✅</span><span class="ob">完了した</span></button>
+    ${t.prog==null?`<button class="opt" onclick="setProg('${t.id}',0)"><span class="oi">📊</span><span class="ob">進捗を記録する<div class="od">何回かに分けて進める仕事向け（%で管理）</div></span></button>`:''}
     <button class="opt" onclick="moveTomorrow('${t.id}')"><span class="oi">⏰</span><span class="ob">明日へ移す</span></button>
-    <button class="opt" onclick="openEdit('${t.id}')"><span class="oi">✎</span><span class="ob">内容を編集<div class="od">期限・相手・写真など</div></span></button>
+    <button class="opt" onclick="openEdit('${t.id}')"><span class="oi">✎</span><span class="ob">内容を編集<div class="od">期限・相手・写真・進捗設定など</div></span></button>
     <button class="opt" onclick="setHold('${t.id}');closeSheet()"><span class="oi">⏸</span><span class="ob">保留にする</span></button>`);
+}
+function setProg(id,p){
+  const t=DB.tasks.find(x=>x.id===id); if(!t)return;
+  t.prog=Math.min(100,Math.max(0,p)); t.updated=TODAY.toISOString();
+  save(); toast(`進捗 ${t.prog}%`); refreshCur(); taskActionSheet(id);
 }
 function moveTomorrow(id){
   const t=DB.tasks.find(x=>x.id===id); if(!t)return;
@@ -937,6 +930,7 @@ function miniRow(t){
       <div class="m-ttl">${esc(t.title)}${t.photo?' 📎':''}</div>
       <div class="m-sub"><span class="ws" style="color:${wsColor(t.ws)}">${esc(t.ws)}</span>
         ${(t.due||t.dueLabel)?`<span>🕐 ${fmtDueT(t)}</span>`:''}${repeatMark(t)?`<span>${repeatMark(t)}</span>`:''}${t.mins?`<span>⏱${t.mins}分</span>`:''}${ballBadge(t.ball)}</div>
+      ${t.prog!=null?`<div style="display:flex;align-items:center;gap:7px;margin-top:6px"><div class="bar-track" style="flex:1;height:5px"><div class="bar-fill" style="width:${t.prog}%"></div></div><span style="font-size:10.5px;font-weight:800;color:var(--muted)">${t.prog}%</span></div>`:''}
       ${t.next?`<div class="next">👉 <b>次にやること</b>：${esc(t.next)}</div>`:''}
     </div>
     <span class="m-edit" onclick="openEdit('${t.id}')">✎</span>
@@ -1130,6 +1124,10 @@ function openEdit(id){
       <div class="edit-fld"><label>所要時間（分）</label><input type="number" id="e_mins" value="${t.mins||''}" placeholder="例：10"></div>
       <div class="edit-fld"><label>繰り返し</label><select id="e_repeat">${REPEAT_OPTS.map(([k,l])=>`<option value="${k}" ${k===(t.repeat||'none')?'selected':''}>${l}</option>`).join('')}</select></div>
     </div>
+    <div class="edit-row2">
+      <div class="edit-fld"><label>進捗の記録</label><select id="e_prog" onchange="document.getElementById('e_progv').disabled=this.value!=='track'"><option value="none" ${t.prog==null?'selected':''}>しない（1回で完了）</option><option value="track" ${t.prog!=null?'selected':''}>する（%で管理）</option></select></div>
+      <div class="edit-fld"><label>現在の進捗（%）</label><input type="number" id="e_progv" min="0" max="100" value="${t.prog!=null?t.prog:''}" placeholder="0〜100" ${t.prog==null?'disabled':''}></div>
+    </div>
     <div class="edit-fld"><label>写真</label>${t.photo?`<div><img src="${t.photo}" style="max-height:140px;border-radius:10px;display:block"><button class="ftab" style="margin-top:6px" onclick="removeTaskPhoto('${t.id}')">写真を外す</button></div>`:`<button class="ftab" onclick="attachTaskPhoto('${t.id}')">📷 写真を添付</button>`}</div>
     <div class="sheet-acts"><button class="ed" onclick="deleteTask('${t.id}')" style="background:var(--red-bg);color:var(--red);border-color:#f3c9c9">削除</button>
       <button class="ok" onclick="saveEdit('${t.id}')">保存する</button></div>`);
@@ -1144,6 +1142,8 @@ function saveEdit(id){
   t.due=newDue; t.nextCheck=fromLocalInput($('#e_check').value);
   t.next=$('#e_next').value.trim()||null;
   const mn=parseInt($('#e_mins').value,10); t.mins=isNaN(mn)?null:mn;
+  if($('#e_prog').value==='track'){ const pv=parseInt($('#e_progv').value,10); t.prog=isNaN(pv)?(t.prog!=null?t.prog:0):Math.min(100,Math.max(0,pv)); }
+  else t.prog=null;
   t.repeat=$('#e_repeat').value;
   t.updated=TODAY.toISOString();
   if(t.project){ if(t.status==='done')autoCompleteStep(t); else syncProjectFromTasks(t.project); }
@@ -1345,7 +1345,7 @@ async function testAI(){
   }catch(e){ toast('❌ '+aiErrMsg(e)); }
 }
 function setDepBusy(b){
-  const btn=document.querySelector('#v-deposit .big-btn'); if(!btn)return;
+  const btn=$('#depBtn'); if(!btn)return;
   btn.disabled=b; btn.style.opacity=b?'.65':'1';
   btn.textContent=b?'🤖 Claudeが整理中…':'🤖 整理して登録する';
 }
@@ -1356,6 +1356,26 @@ function setDepBusy(b){
 let recog=null,recTarget=null;
 function getRecog(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR)return null;
   const r=new SR(); r.lang='ja-JP'; r.interimResults=true; r.continuous=true; return r; }
+
+/* 登録はページではなくシート。🎙️ボタンで開いてすぐ話せる（話し終えると自動登録） */
+function openDepositSheet(autoMic){
+  openSheet(`<h3>🎙️ 仕事・予定を登録</h3>
+    <p class="desc">${aiEnabled()?'話す・書くだけで登録まで自動。<b>Claude</b>が所属・相手・期限を整理します。':'話す・書くだけで登録まで自動。'}</p>
+    <div class="miccircle" id="micCircle" onclick="toggleMic()" style="width:96px;height:96px;font-size:40px;margin:4px auto 4px">🎙️</div>
+    <div class="mic-cap" id="micCap">タップして話す（話し終えると自動で登録）</div>
+    <div class="dep-area" style="margin-top:10px">
+      <textarea id="depText" placeholder="例：来月頭に佐藤さんへ請求書を送る。毎週金曜に週報。7月中に棚卸し"></textarea>
+      <div id="depPhoto"></div>
+      <button class="big-btn" id="depBtn" onclick="submitDeposit()">🤖 整理して登録する</button>
+    </div>
+    <div class="dep-tools" style="margin-top:10px">
+      <button onclick="photoStub()"><span class="ic">📷</span>写真</button>
+      <button onclick="quickEgs()"><span class="ic">💡</span>例を入れる</button>
+      <button onclick="closeSheet()"><span class="ic">✕</span>閉じる</button>
+    </div>`);
+  if(autoMic&&getRecog())setTimeout(()=>toggleMic(),300);
+  else setTimeout(()=>$('#depText')&&$('#depText').focus(),250);
+}
 function toggleMic(){
   const circle=$('#micCircle'),cap=$('#micCap');
   if(recog&&recTarget==='dep'){recog.stop();return;}
@@ -1617,7 +1637,8 @@ function ruleParse(raw){
 let depBusyNow=false;
 async function submitDeposit(){
   if(depBusyNow)return;                       // 連打・二重登録防止
-  const raw=$('#depText').value.trim();
+  const el=$('#depText'); if(!el)return;      // シートが閉じられた後の音声認識終了に備える
+  const raw=el.value.trim();
   if(!raw){toast('内容を話すか入力してください');$('#depText').focus();return;}
   depBusyNow=true;
   if(aiEnabled()){
@@ -2250,19 +2271,25 @@ function renderCal(){
   for(let i=0;i<startDow;i++)html+='<div class="cal-cell blank"></div>';
   for(let d=1;d<=dim;d++){
     const dt=new Date(calYM.getFullYear(),calYM.getMonth(),d);
-    const dots=dayItems(dt).slice(0,4).map(it=>`<span class="cal-dot ${it.kind==='task'?'task':it.kind==='g'?'g':'ev'}"></span>`).join('');
+    const items=dayItems(dt);
+    const labs=items.slice(0,2).map(it=>{
+      const txt=it.kind==='task'?it.task.title:it.ev;
+      const cls=it.kind==='task'?'task':it.kind==='g'?'g':'ev';
+      return `<span class="cal-it ${cls}">${esc(txt)}</span>`;
+    }).join('');
+    const more=items.length>2?`<span class="cal-more">+${items.length-2}件</span>`:'';
     const isToday=dayKey(dt)===dayKey(TODAY), isSel=calSelected&&dayKey(dt)===dayKey(calSelected);
     const dow=dt.getDay();
     html+=`<button class="cal-cell ${isToday?'today':''} ${isSel?'sel':''} ${(dt<startOfDay(TODAY)&&!isToday)?'past':''}" onclick="calSelect(${d})">
-      <span class="d ${dow===0?'sun':dow===6?'sat':''}">${d}</span><span class="cal-dots">${dots}</span></button>`;
+      <span class="d ${dow===0?'sun':dow===6?'sat':''}">${d}</span>${labs}${more}</button>`;
   }
   $('#calGrid').innerHTML=html;
   renderCalDay();
 }
 function renderCalDay(){
   const d=calSelected||TODAY;
-  $('#calDayTitle').textContent=fmtFull(d)+(dayKey(d)===dayKey(TODAY)?'（今日）':'');
   const items=dayItems(d);
+  $('#calDayTitle').textContent=fmtFull(d)+(dayKey(d)===dayKey(TODAY)?'（今日）':'')+(items.length?` ・${items.length}件`:'');
   $('#calDayList').innerHTML=(items.length?`<div class="tl">${items.map(it=>{
     if(it.kind==='task'){ const t=it.task;
       return `<div class="tl-row"><span class="tl-time ${(isOverdue(t.due)&&!t.dueLabel)?'tl-late':''}">${it.t}</span><span class="tl-dot" style="background:${wsColor(t.ws)}"></span>
@@ -2457,8 +2484,8 @@ function finishCustom(){
   DB.workspaces.push({name:'未分類',color:'#8a8f98'});
   const str=(document.querySelector('#ob_str button.on')||{}).dataset; DB.settings.strength=(str&&str.v)||'std';
   DB.onboarded=true; mode='normal'; save(); onboarding=false; afterOnboard();
-  toast('準備できました。「預ける」から最初の仕事を話してみてください');
-  setTimeout(()=>go('deposit'),300);
+  toast('準備できました。最初の仕事を話してみてください');
+  setTimeout(()=>openDepositSheet(false),400);
 }
 function afterOnboard(){ const m=MODES[mode]; $('#modeChip').className='mode-chip '+m.cls; $('#modeLabel').textContent=m.label; closeSheetForce(); postInit(); }
 
