@@ -397,6 +397,12 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 .cal-cell{min-height:64px;background:var(--card);border:1px solid var(--line);border-radius:9px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:3px 2px 3px;gap:2px;position:relative;overflow:hidden;}
 .cal-cell.blank{background:transparent;border:none;box-shadow:none;min-height:0;}
 .cal-cell .d{font-size:12px;font-weight:700;color:#3a414c;line-height:1;align-self:center;margin-bottom:1px;}
+/* お天気カレンダー */
+.cal-wx{font-size:17px;line-height:1.15;text-align:center;}
+.cal-emo{font-size:10px;line-height:1.2;text-align:center;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;}
+.cal-tk{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--red);vertical-align:middle;margin-left:2px;}
+.cal-peek{font-size:12px;font-weight:800;color:#46505e;margin:0 2px 8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 11px;box-shadow:var(--shadow);}
+
 /* 予定ラベル：白抜きをやめ「濃い文字＋薄い背景＋色の縦線」で小さくても読める配色に */
 .cal-it{display:block;font-size:9.5px;line-height:1.4;font-weight:700;border-radius:4px;padding:1px 3px 1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;border-left:3px solid;}
 .cal-it.ev{background:#eef0f3;color:#3c4654;border-color:#8a91a0;}
@@ -498,6 +504,7 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
     <div class="segbtns" style="flex:none"><button id="cmM" class="on" onclick="setCalMode('month')">月</button><button id="cmW" onclick="setCalMode('week')">週</button></div>
     <button class="gsync" id="gsyncBtn" onclick="gcalSync(true)">🔄</button>
   </div>
+  <div class="cal-peek" id="calPeek"></div>
   <div class="cal-wd" id="calWd"><span style="color:#c05050">日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span style="color:#4a68c8">土</span></div>
   <div class="cal-grid" id="calGrid"></div>
   <div class="sec"><span class="bar"></span><span id="calDayTitle">今日</span> <span class="lk" onclick="addScheduleFor()">＋ 予定を追加</span></div>
@@ -2289,6 +2296,30 @@ function calMove(n){
 }
 function calSelect(d){ calSelected=new Date(calYM.getFullYear(),calYM.getMonth(),d); renderCal(); }
 function calPick(iso){ calSelected=new Date(iso); renderCal(); }
+/* お天気カレンダー：忙しさを天気で、中身を絵文字で見せる */
+function dayWeather(items){
+  if(!items.length)return '';
+  const over=items.some(it=>it.kind==='task'&&isOverdue(it.task.due)&&!it.task.dueLabel);
+  if(over||items.length>=7)return '⛈';
+  if(items.length>=5)return '🌧';
+  if(items.length>=3)return '☁️';
+  return '🌤';
+}
+function evEmoji(txt){
+  txt=txt||'';
+  if(/会議|打ち合わせ|打合|ミーティング|MTG|商談|面談|来客/i.test(txt))return '👥';
+  if(/訪問|来店|出張|移動|現場|視察|営業/.test(txt))return '🚗';
+  if(/電話|TEL|架電|かけ/.test(txt))return '📞';
+  if(/請求|入金|支払|振込|経費|見積|集金|給料/.test(txt))return '💰';
+  if(/納品|発送|配送|仕入|発注|在庫|棚卸/.test(txt))return '📦';
+  if(/資料|書類|作成|提出|申請|契約|報告|週報|レポート/.test(txt))return '📄';
+  if(/病院|歯医|通院|健診|検査/.test(txt))return '🏥';
+  if(/誕生日|家族|学校|旅行|帰省|飲み|食事|ランチ|お祝い/.test(txt))return '🍀';
+  if(/メール|LINE|返信|連絡/.test(txt))return '✉️';
+  if(/掃除|整理|片付/.test(txt))return '🧹';
+  return '📌';
+}
+function itemEmoji(it){ return evEmoji(it.kind==='task'?it.task.title:it.ev); }
 function dayItems(d){
   const key=dayKey(d); const items=[];
   (DB.schedule||[]).forEach((s,i)=>{ if(s.date===key)items.push({kind:'ev',t:s.t,st:s.t,ev:s.ev,idx:i}); });
@@ -2305,27 +2336,33 @@ function renderCal(){
   const mB=$('#cmM'),wB=$('#cmW'); if(mB){mB.classList.toggle('on',calMode==='month');wB.classList.toggle('on',calMode==='week');}
   $('#gsyncBtn').style.display=gcalConfigured()?'':'none';
   $('#calGrid').classList.toggle('as-list',calMode==='week');
-  if(calMode==='week'){ $('#calWd').style.display='none'; renderWeek(); renderCalDay(); return; }
-  $('#calWd').style.display='';
+  if(calMode==='week'){ $('#calWd').style.display='none'; $('#calPeek').style.display='none'; renderWeek(); renderCalDay(); return; }
+  $('#calWd').style.display=''; $('#calPeek').style.display='';
   $('#calTitle').textContent=`${calYM.getFullYear()}年 ${calYM.getMonth()+1}月`;
   const startDow=new Date(calYM).getDay(), dim=new Date(calYM.getFullYear(),calYM.getMonth()+1,0).getDate();
-  let html='';
+  let html=''; const dayStats=[];
   for(let i=0;i<startDow;i++)html+='<div class="cal-cell blank"></div>';
   for(let d=1;d<=dim;d++){
     const dt=new Date(calYM.getFullYear(),calYM.getMonth(),d);
     const items=dayItems(dt);
-    const labs=items.slice(0,2).map(it=>{
-      const txt=it.kind==='task'?it.task.title:it.ev;
-      const cls=it.kind==='task'?'task':it.kind==='g'?'g':'ev';
-      return `<span class="cal-it ${cls}">${esc(txt)}</span>`;
-    }).join('');
-    const more=items.length>2?`<span class="cal-more">+${items.length-2}件</span>`:'';
+    dayStats.push({d,n:items.length,over:items.some(it=>it.kind==='task'&&isOverdue(it.task.due)&&!it.task.dueLabel),fut:dt>=startOfDay(TODAY)});
+    const wx=dayWeather(items);
+    const emos=[...new Set(items.map(itemEmoji))].slice(0,3).join('');
+    const hasTask=items.some(it=>it.kind==='task');
     const isToday=dayKey(dt)===dayKey(TODAY), isSel=calSelected&&dayKey(dt)===dayKey(calSelected);
     const dow=dt.getDay();
     html+=`<button class="cal-cell ${isToday?'today':''} ${isSel?'sel':''} ${(dt<startOfDay(TODAY)&&!isToday)?'past':''}" onclick="calSelect(${d})">
-      <span class="d ${dow===0?'sun':dow===6?'sat':''}">${d}</span>${labs}${more}</button>`;
+      <span class="d ${dow===0?'sun':dow===6?'sat':''}">${d}</span>
+      ${wx?`<span class="cal-wx">${wx}</span>`:''}
+      ${emos?`<span class="cal-emo">${emos}${hasTask?'<i class="cal-tk"></i>':''}</span>`:''}
+      ${items.length>=3?`<span class="cal-more">${items.length}件</span>`:''}</button>`;
   }
   $('#calGrid').innerHTML=html;
+  // 今月の山場（忙しい日トップ2を予報）
+  const peaks=dayStats.filter(c=>c.fut&&(c.n>=5||(c.over&&c.n>=2))).sort((a,b)=>(b.over?10:0)+b.n-((a.over?10:0)+a.n)).slice(0,2);
+  $('#calPeek').innerHTML=peaks.length
+    ?`⚡ 山場：${peaks.map(p=>`${calYM.getMonth()+1}/${p.d}（${p.n}件${p.over?'・期限すぎあり':''}）`).join('・')}`
+    :`この月はおだやかです 🌤`;
   renderCalDay();
 }
 function renderWeek(){
@@ -2339,7 +2376,7 @@ function renderWeek(){
     const items=dayItems(dt);
     const isToday=dayKey(dt)===dayKey(TODAY);
     html+=`<div class="wk-day ${isToday?'today':''}">
-      <div class="wk-hd" onclick="calPick('${dt.toISOString()}')">${dt.getMonth()+1}/${dt.getDate()}（<span style="${dt.getDay()===0?'color:#c05050':dt.getDay()===6?'color:#4a68c8':''}">${WD[dt.getDay()]}</span>）${isToday?'<span class="wk-today">きょう</span>':''}<span class="wk-ct">${items.length?items.length+'件':''}</span></div>
+      <div class="wk-hd" onclick="calPick('${dt.toISOString()}')">${dt.getMonth()+1}/${dt.getDate()}（<span style="${dt.getDay()===0?'color:#c05050':dt.getDay()===6?'color:#4a68c8':''}">${WD[dt.getDay()]}</span>）${dayWeather(items)}${isToday?'<span class="wk-today">きょう</span>':''}<span class="wk-ct">${items.length?items.length+'件':''}</span></div>
       ${items.length?items.map(it=>{
         if(it.kind==='task'){const t=it.task;return `<div class="wk-it task" onclick="taskActionSheet('${t.id}')"><span class="wk-tm">${it.t}</span><span class="wk-tx">${esc(t.title)}${t.dueLabel?'（'+esc(t.dueLabel)+'）':''}</span></div>`;}
         if(it.kind==='g')return `<div class="wk-it g"><span class="wk-tm">${it.t}</span><span class="wk-tx">${esc(it.ev)}</span></div>`;
@@ -2361,7 +2398,8 @@ function renderCalDay(){
     if(it.kind==='g')return `<div class="tl-row tl-ev"><span class="tl-time">${it.t}</span><span class="tl-dot" style="background:#3f8af0"></span><div class="tl-body">${esc(it.ev)}<div class="tl-sub">Googleカレンダー</div></div></div>`;
     return `<div class="tl-row tl-ev"><span class="tl-time">${it.t}</span><span class="tl-dot"></span><div class="tl-body">${esc(it.ev)}</div><span class="tl-del" onclick="delSchedule(${it.idx})">×</span></div>`;
   }).join('')}</div>`:`<div class="empty">この日の予定・期限はありません</div>`)
-  +`<div class="cal-legend"><span>● 予定</span><span style="color:#3f8af0">● Google</span><span style="color:var(--red)">● 仕事の期限</span></div>`;
+  +`<div class="cal-legend"><span>● 予定</span><span style="color:#3f8af0">● Google</span><span style="color:var(--red)">● 仕事の期限</span></div>
+   <div class="cal-legend">天気=忙しさ：<span>🌤ゆとり</span><span>☁️ふつう</span><span>🌧つまり気味</span><span>⛈要注意</span></div>`;
 }
 
 /* =====================================================================
