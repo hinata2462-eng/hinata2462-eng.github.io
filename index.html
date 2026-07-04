@@ -405,6 +405,18 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 .cal-more{font-size:9px;font-weight:800;color:var(--muted);text-align:center;}
 .cal-cell.sel .cal-more{color:#dfe6f5;}
 
+/* そっけないタスク一覧（左=内容・右=期限） */
+.trow{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-left:4px solid;border-radius:12px;padding:8px 11px;margin-bottom:6px;box-shadow:var(--shadow);}
+.chk.sm{width:30px;height:30px;font-size:15px;border-width:2px;}
+.t-ttl{flex:1;min-width:0;font-size:14.5px;font-weight:700;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t-due{flex:none;font-size:12px;font-weight:800;color:var(--muted);text-align:right;max-width:92px;}
+.t-due.over2{color:var(--red);}
+.t-prog{flex:none;font-size:11px;font-weight:800;color:var(--blue-d);}
+.t-rep{flex:none;font-size:11px;}
+.sum-next{font-size:12.5px;color:#3c4654;font-weight:700;margin-top:10px;background:#f4f6f9;border:1px solid var(--line);border-radius:9px;padding:7px 10px;}
+.sum-next-ct{float:right;color:var(--blue-d);font-weight:800;}
+.dep-tools button.rec{background:var(--red);color:#fff;border-color:var(--red);}
+
 /* サマリーの見出し（数字を主役に） */
 .sum-line2{font-size:16px;font-weight:700;margin-top:8px;color:#2c3340;}
 .sum-big{font-size:30px;color:var(--navy);font-weight:800;padding:0 2px;}
@@ -469,14 +481,10 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 <section class="view on" id="v-home">
   <div id="summarySlot"></div>
   <div id="heroSlot" style="margin-top:12px"></div>
-  <div class="sec"><span class="bar"></span>今日の流れ</div>
-  <div id="timelineSlot"></div>
-  <div class="sec" id="untimedHead"><span class="bar"></span>ほかにやる仕事 <span class="ct" id="todayCt"></span></div>
+  <div class="sec"><span class="bar"></span>やること <span class="ct" id="todayCt"></span></div>
   <div id="todayList"></div>
   <div class="sec" id="projHead"><span class="bar"></span>案件の進捗 <span class="lk" onclick="go('proj')">すべて見る ›</span></div>
   <div id="projStrip"></div>
-  <div class="sec" id="attnHead"><span class="bar" style="background:var(--red)"></span>気になること <span class="ct" id="stallCt"></span></div>
-  <div id="stallList"></div>
   <div id="holdSlot"></div>
   <div id="cleanupSlot"></div>
 </section>
@@ -529,7 +537,7 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 
 <nav>
   <button class="on" data-v="home" onclick="go('home')"><span class="ic">🏠</span>ホーム</button>
-  <button class="dep" onclick="openDepositSheet(true)"><span class="ic">🎙️</span>登録</button>
+  <button class="dep" onclick="openDepositSheet(false)"><span class="ic">＋</span>登録</button>
   <button data-v="cal" onclick="go('cal')"><span class="ic">📅</span>予定</button>
 </nav>
 
@@ -778,10 +786,17 @@ function renderHome(){
   const headline= totalToday===0?`<span class="sum-big-ok">きょうの仕事はありません 🍵</span>`
     : selfNow.length===0?`<span class="sum-big-ok">ぜんぶ完了！🎉</span>`
     : `きょうは あと <b class="sum-big">${selfNow.length}</b> 件${doneToday?`<span class="sum-done">（${doneToday}件 終わった）</span>`:''}`;
+  const nowHM=`${p2(TODAY.getHours())}:${p2(TODAY.getMinutes())}`;
+  const evsToday=[];
+  (DB.schedule||[]).forEach(s=>{ if(s.date===dayKey(TODAY)&&s.t>nowHM)evsToday.push({t:s.t,ev:s.ev}); });
+  (DB.gcal||[]).forEach(g=>{ if(g.date===dayKey(TODAY)&&g.t!=='終日'&&g.t>nowHM)evsToday.push({t:g.t,ev:g.ev}); });
+  evsToday.sort((a,b)=>a.t.localeCompare(b.t));
+  const nextEv=evsToday[0];
   $('#summarySlot').innerHTML=`<div class="summary">
     <div class="sum-date">${fmtFull(TODAY)}　${hello}<button class="sum-mode" onclick="openMode()">${MODES[mode].icon} ${MODES[mode].label}</button></div>
     <div class="sum-line2">${headline}</div>
     ${totalToday?`<div class="bar-track" style="height:8px;margin-top:10px"><div class="bar-fill" style="width:${pct}%"></div></div>`:''}
+    ${nextEv?`<div class="sum-next" onclick="go('cal')">📅 このあと ${nextEv.t}　${esc(nextEv.ev)}${evsToday.length>1?`<span class="sum-next-ct">ほか${evsToday.length-1}件 ›</span>`:' ›'}</div>`:''}
     <div class="sum-chips">${chips.join('')||'<span class="sum-ok">✓ 人からの返事まちはありません</span>'}</div>
   </div>`;
 
@@ -810,35 +825,22 @@ function renderHome(){
       </div></div>`;
   }
 
-  // ---- 今日の流れ（予定＋期限付きタスクの統合タイムライン） ----
-  $('#timelineSlot').innerHTML=timelineHTML(hero);
-
-  // ---- 今日中にやる（時刻なし）＋今日完了した仕事（減光） ----
-  let untimed=activeTasks().filter(t=>t.ball==='self'&&t.status==='now'&&!(t.due&&!t.dueLabel&&fmtDue(t.due).startsWith('今日'))&&(!hero||t.id!==hero.id));
-  untimed.sort((a,b)=>priorityScore(b)-priorityScore(a)); untimed=untimed.slice(0,5);
+  // ---- やること（そっけない一覧：左=内容・右=期限。優先順はAIが並べ、放置は💤・超過は赤字） ----
+  let list=activeTasks().filter(t=>t.ball==='self'&&(t.status==='now'||t.status==='warn')&&(!hero||t.id!==hero.id));
+  list.sort((a,b)=>priorityScore(b)-priorityScore(a));
+  const stalledIds=new Set(detectStalls(999).map(s=>s.t.id));
   const doneRows=DB.tasks.filter(t=>t.status==='done'&&daysSince(t.updated)===0).slice(-3);
-  $('#todayCt').textContent=untimed.length?`${untimed.length}件`:'';
-  $('#untimedHead').classList.toggle('hidden',!untimed.length&&!doneRows.length);
-  $('#todayList').innerHTML=untimed.map(miniRow).join('')
-    +doneRows.map(t=>`<div class="mini done" style="border-left-color:${wsColor(t.ws)}">
-      <button class="chk" onclick="reopenTask('${t.id}')" title="未完了に戻す">✓</button>
-      <div class="m-body"><div class="m-ttl">${esc(t.title)}</div>
-      <div class="m-sub"><span class="ws" style="color:${wsColor(t.ws)}">${esc(t.ws)}</span><span class="tag done">完了</span></div></div></div>`).join('');
+  $('#todayCt').textContent=list.length?`${list.length}件`:'';
+  $('#todayList').innerHTML=(list.length?list.map(t=>taskRow(t,stalledIds)).join(''):`<div class="empty">やることは空っぽです 🎉</div>`)
+    +doneRows.map(t=>`<div class="trow" style="border-left-color:${wsColor(t.ws)};opacity:.5">
+      <button class="chk sm" onclick="reopenTask('${t.id}')" title="未完了に戻す" style="background:var(--green);border-color:var(--green);color:#fff">✓</button>
+      <div class="t-ttl" style="text-decoration:line-through;color:#9aa0a8">${esc(t.title)}</div>
+      <div class="t-due">完了</div></div>`).join('');
 
   // ---- 案件の進捗（最大3件・注意が必要な順） ----
   const strip=projStripHTML();
   $('#projHead').classList.toggle('hidden',!strip);
   $('#projStrip').innerHTML=strip;
-
-  // ---- 気になること（最重要1枚＋残りはコンパクト行） ----
-  const stalled=detectStalls();
-  $('#stallCt').textContent=stalled.length?`${stalled.length}件`:'';
-  $('#attnHead').classList.toggle('hidden',!stalled.length);
-  $('#stallList').innerHTML=stalled.length?(stallCard(stalled[0])
-    +stalled.slice(1).map(s=>`<div class="mini" style="border-left-color:var(--red)" onclick="openStallSheet('${s.t.id}')">
-      <span style="font-size:17px;flex:none">⚠️</span>
-      <div class="m-body"><div class="m-ttl">${esc(s.t.title)}</div><div class="m-sub"><span>${esc(s.reason)}</span></div></div>
-      <span class="m-edit">›</span></div>`).join('')):'';
 
   // ---- 保留中（折りたたみ） ----
   const holds=holdTasks();
@@ -918,6 +920,7 @@ function taskActionSheet(id){
       <div class="bar-lab"><span>進捗</span><span><b>${t.prog}%</b></span></div>
       <div class="segbtns" style="margin-top:9px">${[10,25,50,75,90].map(p=>`<button class="${t.prog===p?'on':''}" onclick="setProg('${t.id}',${p})">${p}</button>`).join('')}<button onclick="completeTask('${t.id}');closeSheet()">✓完了</button></div>
     </div>`:''}
+    ${(function(){const st=detectStalls(999).find(s=>s.t.id===t.id);return st?`<button class="opt" style="border-color:#f3c9c9;background:var(--red-bg)" onclick="openStallSheet('${t.id}')"><span class="oi">⚠️</span><span class="ob">この仕事、止まっていませんか？<div class="od">${esc(st.reason)} — 解決策を見る</div></span></button>`:'';})()}
     <button class="opt" onclick="completeTask('${t.id}');closeSheet()"><span class="oi">✅</span><span class="ob">完了した</span></button>
     ${t.prog==null?`<button class="opt" onclick="setProg('${t.id}',0)"><span class="oi">📊</span><span class="ob">進捗を記録する<div class="od">何回かに分けて進める仕事向け（%で管理）</div></span></button>`:''}
     <button class="opt" onclick="moveTomorrow('${t.id}')"><span class="oi">⏰</span><span class="ob">明日へ移す</span></button>
@@ -936,7 +939,7 @@ function moveTomorrow(id){
   save(); closeSheet(); toast('明日へ移しました'); refreshCur();
 }
 function openStallSheet(id){
-  const s=detectStalls().find(x=>x.t.id===id); if(!s)return;
+  const s=detectStalls(999).find(x=>x.t.id===id); if(!s)return;
   openSheet(stallCard(s));
 }
 
@@ -955,7 +958,21 @@ function miniRow(t){
 }
 function ballBadge(b){ const x=BALL[b]||BALL.self; return `<span class="ball ${x.cls}">${x.icon} ${x.label}</span>`; }
 
-function detectStalls(){
+/* そっけない1行タスク：左=内容・右=期限。AIの気配りは印だけ（💤=放置ぎみ、赤=期限すぎ） */
+function taskRow(t,stalledIds){
+  const over=isOverdue(t.due)&&!t.dueLabel;
+  const idle=stalledIds&&stalledIds.has(t.id)&&!over;
+  const dueTxt=t.dueLabel?t.dueLabel:(t.due?fmtDue(t.due):'');
+  return `<div class="trow" style="border-left-color:${wsColor(t.ws)}">
+    <button class="chk sm" onclick="completeTask('${t.id}')">✓</button>
+    <div class="t-ttl" onclick="taskActionSheet('${t.id}')">${idle?'💤 ':''}${esc(t.title)}</div>
+    ${t.prog!=null?`<span class="t-prog">${t.prog}%</span>`:''}
+    ${repeatMark(t)?`<span class="t-rep">🔁</span>`:''}
+    <div class="t-due ${over?'over2':''}">${dueTxt}</div>
+  </div>`;
+}
+
+function detectStalls(max){
   const out=[];
   activeTasks().forEach(t=>{
     let reason=null,kind=null;
@@ -969,7 +986,7 @@ function detectStalls(){
   });
   const sw=x=>(x.kind==='unknown'?10:0)+(x.t.prio||0);   // 担当不明は追跡不能なので最優先で見せる
   out.sort((a,b)=>sw(b)-sw(a)||daysSince(b.t.updated)-daysSince(a.t.updated));
-  return out.slice(0,4);
+  return out.slice(0,max||4);
 }
 function stallCard({t,reason,kind}){
   // シート内から呼ばれても閉じるよう、状態変更ボタンには closeSheet() を付ける（ホーム直置きでは無害）
@@ -1364,7 +1381,7 @@ async function testAI(){
 function setDepBusy(b){
   const btn=$('#depBtn'); if(!btn)return;
   btn.disabled=b; btn.style.opacity=b?'.65':'1';
-  btn.textContent=b?'🤖 Claudeが整理中…':'🤖 整理して登録する';
+  btn.textContent=b?'🤖 Claudeが整理中…':'登録する';
 }
 
 /* =====================================================================
@@ -1374,35 +1391,33 @@ let recog=null,recTarget=null;
 function getRecog(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR)return null;
   const r=new SR(); r.lang='ja-JP'; r.interimResults=true; r.continuous=true; return r; }
 
-/* 登録はページではなくシート。🎙️ボタンで開いてすぐ話せる（話し終えると自動登録） */
+/* 登録シート：書き込みがメイン、音声はサブ。書いて「登録する」だけ（整理と登録は自動） */
 function openDepositSheet(autoMic){
-  openSheet(`<h3>🎙️ 仕事・予定を登録</h3>
-    <p class="desc">${aiEnabled()?'話す・書くだけで登録まで自動。<b>Claude</b>が所属・相手・期限を整理します。':'話す・書くだけで登録まで自動。'}</p>
-    <div class="miccircle" id="micCircle" onclick="toggleMic()" style="width:96px;height:96px;font-size:40px;margin:4px auto 4px">🎙️</div>
-    <div class="mic-cap" id="micCap">タップして話す（話し終えると自動で登録）</div>
-    <div class="dep-area" style="margin-top:10px">
-      <textarea id="depText" placeholder="例：来月頭に佐藤さんへ請求書を送る。毎週金曜に週報。7月中に棚卸し"></textarea>
+  openSheet(`<h3>＋ 登録</h3>
+    <p class="desc">やること・予定をそのまま書くだけ。所属・相手・期限は${aiEnabled()?'<b>Claude</b>':'AI'}が整理します。</p>
+    <div class="dep-area" style="margin-top:2px">
+      <textarea id="depText" placeholder="ここに書く（複数まとめてOK）"></textarea>
       <div id="depPhoto"></div>
-      <button class="big-btn" id="depBtn" onclick="submitDeposit()">🤖 整理して登録する</button>
+      <button class="big-btn" id="depBtn" onclick="submitDeposit()">登録する</button>
     </div>
     <div class="dep-tools" style="margin-top:10px">
+      <button id="micCircle" onclick="toggleMic()"><span class="ic">🎙️</span>話して登録</button>
       <button onclick="photoStub()"><span class="ic">📷</span>写真</button>
-      <button onclick="quickEgs()"><span class="ic">💡</span>例を入れる</button>
       <button onclick="closeSheet()"><span class="ic">✕</span>閉じる</button>
     </div>`);
   if(autoMic&&getRecog())setTimeout(()=>toggleMic(),300);
   else setTimeout(()=>$('#depText')&&$('#depText').focus(),250);
 }
 function toggleMic(){
-  const circle=$('#micCircle'),cap=$('#micCap');
+  const circle=$('#micCircle');
   if(recog&&recTarget==='dep'){recog.stop();return;}
-  recog=getRecog(); if(!recog){toast('この端末は音声入力に未対応です。文字で入力してください');$('#depText').focus();return;}
-  recTarget='dep'; let base=$('#depText').value;
-  circle.classList.add('rec'); cap.textContent='聞いています…（もう一度タップで停止）';
-  recog.onresult=e=>{let txt='';for(let i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;$('#depText').value=(base?base+' ':'')+txt;};
+  recog=getRecog(); if(!recog){toast('この端末は音声入力に未対応です。文字で入力してください');if($('#depText'))$('#depText').focus();return;}
+  recTarget='dep'; let base=$('#depText')?$('#depText').value:'';
+  if(circle){circle.classList.add('rec');circle.innerHTML='<span class="ic">⏹</span>聞いています…';}
+  recog.onresult=e=>{let txt='';for(let i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;if($('#depText'))$('#depText').value=(base?base+' ':'')+txt;};
   recog.onerror=()=>{};
-  recog.onend=()=>{circle.classList.remove('rec');cap.textContent='タップして話す';recog=null;
-    if($('#depText').value.trim())submitDeposit();};   // 話し終えたら自動で整理→登録まで実行
+  recog.onend=()=>{const c=$('#micCircle');if(c){c.classList.remove('rec');c.innerHTML='<span class="ic">🎙️</span>話して登録';}recog=null;
+    if($('#depText')&&$('#depText').value.trim())submitDeposit();};   // 話し終えたら自動で整理→登録
   recog.start();
 }
 function quickEgs(){
