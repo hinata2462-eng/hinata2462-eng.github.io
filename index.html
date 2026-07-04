@@ -549,7 +549,6 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 
 <!-- FOLLOW -->
 <section class="view" id="v-follow">
-  <button class="backbar" onclick="go('home')">‹ ホームへ戻る</button>
   <div class="sec" style="margin-top:6px"><span class="bar"></span>フォロー（いま誰の番か）</div>
   <div class="ftabs" id="ftabs"></div>
   <div id="followBody"></div>
@@ -581,6 +580,7 @@ nav button .badge{position:absolute;top:5px;right:50%;transform:translateX(20px)
 <nav>
   <button class="on" data-v="home" onclick="go('home')"><span class="ic">🏠</span>ホーム</button>
   <button class="dep" onclick="openDepositSheet(false)"><span class="ic">＋</span>登録</button>
+  <button data-v="follow" onclick="go('follow')"><span class="ic">🔔</span>フォロー<span class="badge hidden" id="navFollowBadge"></span></button>
   <button data-v="cal" onclick="go('cal')"><span class="ic">📅</span>予定</button>
 </nav>
 
@@ -719,16 +719,34 @@ function fromLocalInput(v){ if(!v)return null; const d=new Date(v); return isNaN
    ===================================================================== */
 function seed(){
   let id=0; const uid=()=>'t'+(++id);
+  const seedEom=()=>new Date(TODAY.getFullYear(),TODAY.getMonth()+1,0,18,0,0).toISOString();
+  const seedNext25=()=>{let d=new Date(TODAY.getFullYear(),TODAY.getMonth(),25,18,0,0);if(d<TODAY)d=new Date(TODAY.getFullYear(),TODAY.getMonth()+1,25,18,0,0);return d.toISOString();};
+  const seedNextDow=w=>{const d=new Date(TODAY);let f=(w-d.getDay()+7)%7;if(!f)f=7;d.setDate(d.getDate()+f);d.setHours(18,0,0,0);return d.toISOString();};
   const tasks=[
     {id:uid(),ws:'三高産業',title:'○○社へ在庫回答',status:'now',ball:'self',next:'在庫数を確認して電話で回答する',due:atTime(0,10,0),mins:5,prio:5,reason:'午後の配送手配に影響します',updated:dPlus(0)},
     {id:uid(),ws:'三高産業',title:'○○社へ見積を送付',status:'now',ball:'self',next:'見積書PDFをメールで送る',due:atTime(0,17,0),mins:15,prio:4,updated:dPlus(-1)},
     {id:uid(),ws:'REIKI',title:'PV素材を確認',status:'now',ball:'self',next:'届いた素材を3点チェックする',due:atTime(0,21,0),mins:30,prio:3,updated:dPlus(-1)},
     {id:uid(),ws:'OLIVE',title:'キャンペーン予約者へ返信',status:'now',ball:'self',next:'予約者3名へLINEで返信',due:atTime(0,19,0),mins:10,prio:3,updated:dPlus(-1)},
     {id:uid(),ws:'プライベート',title:'家族の予定を確認',status:'now',ball:'self',next:'週末の予定をカレンダーで確認',due:atTime(0,20,0),mins:5,prio:2,updated:dPlus(-1)},
+    // 期限切れ（リスケジュールのデモ用）
+    {id:uid(),ws:'三高産業',title:'仕入先へ支払い処理',status:'now',ball:'self',due:atTime(-1,15,0),prio:4,updated:dPlus(-2)},
+    {id:uid(),ws:'OLIVE',title:'求人原稿の修正',status:'now',ball:'self',due:atTime(-2,18,0),prio:3,updated:dPlus(-3)},
+    // これから（明日〜今週）
+    {id:uid(),ws:'三高産業',title:'発注書の承認',status:'now',ball:'self',due:atTime(1,12,0),prio:3,updated:dPlus(0)},
+    {id:uid(),ws:'プライベート',title:'歯医者の予約を取る',status:'now',ball:'self',due:atTime(1,18,0),mins:5,prio:2,updated:dPlus(0)},
+    {id:uid(),ws:'REIKI',title:'新ラベルデザインの確認',status:'now',ball:'self',due:atTime(2,18,0),prio:3,updated:dPlus(0)},
+    {id:uid(),ws:'三高産業',title:'配送ルートの見直し案',status:'now',ball:'self',due:atTime(6,18,0),prio:3,updated:dPlus(0)},
+    {id:uid(),ws:'OLIVE',title:'秋キャンペーンの企画案',status:'now',ball:'self',due:atTime(8,18,0),prio:3,updated:dPlus(0)},
+    // ざっくり期限・繰り返し
+    {id:uid(),ws:'三高産業',title:'月次報告書をまとめる',status:'now',ball:'self',due:seedEom(),dueLabel:`${TODAY.getMonth()+1}月末`,prio:3,updated:dPlus(0)},
+    {id:uid(),ws:'REIKI',title:'香水の在庫を補充する',status:'now',ball:'self',due:seedEom(),dueLabel:`${TODAY.getMonth()+1}月中`,prio:2,updated:dPlus(0)},
+    {id:uid(),ws:'三高産業',title:'請求書を発行する',status:'now',ball:'self',repeat:'monthly25',repeatDate:25,due:seedNext25(),prio:4,updated:dPlus(0)},
+    {id:uid(),ws:'REIKI',title:'SNS投稿をつくる',status:'now',ball:'self',repeat:'weekly',repeatDay:5,due:seedNextDow(5),prio:2,updated:dPlus(0)},
     {id:uid(),ws:'三高産業',person:'田中商事 田中さん',title:'在庫確認の回答',status:'wait',ball:'other',next:'回答が来たら発注数を確定',due:dPlus(-1),nextCheck:atTime(-1,15,0),mins:5,prio:4,answer:'none',updated:dPlus(-4),follows:[fday(-13)+' 在庫確認を依頼',fday(-10)+' 1回目の確認',fday(-4)+' 2回目の確認（未回答）']},
     {id:uid(),ws:'三高産業',person:'山本さん',title:'資材の在庫回答',status:'wait',ball:'other',next:'回答後に発注書を作成',due:atTime(0,15,0),nextCheck:atTime(0,16,0),mins:5,prio:3,answer:'none',updated:dPlus(0),follows:[fday(0)+' 在庫確認を依頼']},
     {id:uid(),ws:'REIKI',person:'佐藤さん',title:'アトマイザー見積の回答',status:'wait',ball:'other',next:'見積が来たら発注判断',due:dPlus(2),nextCheck:atTime(2,15,0),mins:5,prio:3,answer:'partial',ansOK:['在庫数（在庫あり）'],ansNG:['アトマイザー見積','納期','来週の訪問日時'],updated:dPlus(-2),follows:[fday(-13)+' 見積を依頼',fday(-10)+' 1回目の確認',fday(-7)+' 一部回答（在庫のみ）',fday(-6)+' 納期について追加確認']},
     {id:uid(),ws:'REIKI',person:'デザイナー 川口さん',title:'AXIVEロゴデータの提出',status:'wait',ball:'team',next:'ロゴ受領後、最終編集に反映',due:dPlus(0),nextCheck:atTime(0,17,0),mins:5,prio:5,answer:'none',updated:dPlus(-3),project:'p_reiki_pv',follows:[fday(-5)+' ロゴデータを依頼',fday(-3)+' 1回目の確認']},
+    {id:uid(),ws:'OLIVE',person:'印刷会社 高橋さん',title:'チラシ増刷の見積',status:'wait',ball:'other',next:'見積が来たら部数を決める',due:dPlus(2),nextCheck:atTime(2,11,0),prio:3,answer:'none',updated:dPlus(-1),follows:[fday(-2)+' 見積を依頼']},
     {id:uid(),ws:'三高産業',title:'入金確認後に出荷手配',status:'wait',ball:'cond',next:'入金を確認したら出荷を手配',due:dPlus(3),nextCheck:dPlus(3),mins:10,prio:2,answer:'none',updated:dPlus(-1),condText:'○○社からの入金待ち'},
     {id:uid(),ws:'OLIVE',title:'ホームページ制作を進める',status:'warn',ball:'self',next:'掲載する室内写真を3枚選ぶ',due:null,mins:10,prio:3,updated:dPlus(-5),deferCount:1,project:'p_olive_hp',stallReason:'掲載写真が未決定'},
     {id:uid(),ws:'三高産業',title:'倉庫の棚卸し表をまとめる',status:'warn',ball:'self',next:null,due:null,mins:null,prio:2,updated:dPlus(-8),deferCount:3,stallReason:'作業が大きく、3回延期されています'},
@@ -742,11 +760,26 @@ function seed(){
     {id:'p_sankou_q3',ws:'三高産業',name:'第3四半期 新商品仕入れ',blocker:null,current:'見積比較',next:'2社の見積を比較表にする',due:dPlus(20),updated:dPlus(0),
       steps:[{n:'候補リスト作成',s:'done'},{n:'見積依頼',s:'done'},{n:'見積比較',s:'prog'},{n:'社内承認',s:'todo'},{n:'発注',s:'todo'}]},
   ];
-  const dk=dayKey(TODAY);
+  const dkey=n=>dayKey(addD(n));
+  const bizKey=n=>{const d=addD(n);while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()+1);return dayKey(d);}; // 仕事系は平日に寄せる
+  const satOff=((6-TODAY.getDay())+7)%7||7, sunOff=((7-TODAY.getDay())%7)||7;
   const schedule=[
-    {date:dk,t:'10:00',ev:'取引先訪問（○○社）'},
-    {date:dk,t:'14:00',ev:'商品課 打ち合わせ'},
-    {date:dk,t:'19:30',ev:'REIKI 作業（60分確保）'},
+    {date:dkey(0),t:'10:00',ev:'取引先訪問（○○社）'},
+    {date:dkey(0),t:'14:00',ev:'商品課 打ち合わせ'},
+    {date:dkey(0),t:'19:30',ev:'REIKI 作業（60分）'},
+    {date:bizKey(1),t:'11:00',ev:'銀行で手続き'},
+    {date:bizKey(2),t:'13:00',ev:'△△社と電話商談'},
+    {date:bizKey(3),t:'10:00',ev:'倉庫の視察'},
+    {date:bizKey(4),t:'16:00',ev:'新商品サンプル確認'},
+    {date:dkey(satOff),t:'10:00',ev:'家族で買い出し'},
+    {date:dkey(sunOff),t:'12:00',ev:'親戚と食事'},
+    {date:bizKey(7),t:'09:30',ev:'歯科 定期検診'},
+    {date:bizKey(9),t:'15:00',ev:'OLIVE 店舗ミーティング'},
+    {date:bizKey(11),t:'10:00',ev:'展示会を見学'},
+    {date:bizKey(13),t:'18:00',ev:'同業の交流会'},
+    {date:bizKey(15),t:'11:00',ev:'税理士と面談'},
+    {date:bizKey(18),t:'13:30',ev:'REIKI 撮影日'},
+    {date:bizKey(21),t:'10:00',ev:'学校行事'},
   ];
   const memory=['三高産業の仕事は日中を優先','REIKIの制作作業は夜（19:30〜）','家族の予定は原則変更しない','佐藤さんへの確認は電話が多い','PV制作は通常60〜90分必要'];
   const learned=[{person:'佐藤さん',ws:'REIKI',count:5},{person:'田中商事',ws:'三高産業',count:5},{person:'田中さん',ws:'三高産業',count:3},{person:'川口さん',ws:'REIKI',count:3},{person:'山本さん',ws:'三高産業',count:4}];
@@ -1748,13 +1781,20 @@ function registerParsed(list){
 function showRegisteredSheet(created,byAI){
   const rows=created.map(c=>{
     const p=c.p, b=BALL[p.ball]||BALL.self;
+    // AIの自信が低い項目は「⚠要確認」で目立たせる（自動登録でも誤判定にすぐ気づける）
+    const warn=[];
+    if(p.conf&&p.conf.ws!=='hi')warn.push('所属');
+    if(p.person&&p.conf&&p.conf.person!=='hi')warn.push('相手');
+    if(!p.due&&!p.dueLabel&&p.repeat==='none')warn.push('期限なし');
     return `<div class="mini" style="border-left-color:${wsColor(p.ws)}">
       <div class="m-body" onclick="openEdit('${c.id}')">
         <div class="m-ttl">${esc(p.title)}</div>
         <div class="m-sub"><span class="ws" style="color:${wsColor(p.ws)}">${esc(p.ws)}</span>
           ${(p.due||p.dueLabel)?`<span>🕐 ${p.dueLabel?esc(p.dueLabel):fmtDue(p.due)}</span>`:''}
+          ${p.person?`<span>👤 ${esc(p.person)}</span>`:''}
           ${repeatMark(p)?`<span>${repeatMark(p)}</span>`:''}
           <span class="ball ${b.cls}">${b.icon} ${b.label}</span></div>
+        ${warn.length?`<div class="m-sub" style="color:var(--amber);font-weight:800">⚠ 要確認：${warn.join('・')}（タップで修正）</div>`:''}
         ${p.dup?`<div class="m-sub" style="color:var(--amber)">⚠️「${esc(p.dup)}」と重複かも（不要ならタップ→削除）</div>`:''}
         ${p.next?`<div class="next">👉 <b>次にやること</b>：${esc(p.next)}</div>`:''}
       </div><span class="m-edit">✎</span></div>`;
